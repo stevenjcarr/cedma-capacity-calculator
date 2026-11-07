@@ -2,7 +2,7 @@
 /**
  * CEdMA Enterprise capacity calculator
  *
- * The browser sends the course list to this file, and the calculation runs
+ * The browser sends the list of items to this file, and the calculation runs
  * here on the server. Styles, script, and logos are in assets/. The ratios
  * below are never sent to the browser; the page only ever receives results.
  */
@@ -17,7 +17,7 @@ declare(strict_types=1);
 //   dev_hours_per_unit  hours of development per unit of finished new content,
 //                       based on published industry figures
 //   max                 the longest duration accepted
-//   ai_saving           the reduction when a course is marked AI assisted, or
+//   ai_saving           the reduction when an item is marked AI assisted, or
 //                       null where the option does not apply
 //   description, ai_note  shown in the content types table on the page
 // For example, one minute of finished produced video takes five hours to develop.
@@ -84,7 +84,7 @@ const EFFORT_LEVELS = [
 	'minor' => ['label' => 'Minor updates (25%)',                  'factor' => 0.25],
 	'half'  => ['label' => 'Updates to half of the content (50%)', 'factor' => 0.5],
 	'major' => ['label' => 'Major updates to content (75%)',       'factor' => 0.75],
-	'new'   => ['label' => 'New course from scratch (100%)',       'factor' => 1.0],
+	'new'   => ['label' => 'New content from scratch (100%)',      'factor' => 1.0],
 ];
 
 const WORKING_WEEKS_PER_YEAR = 45;
@@ -226,7 +226,7 @@ function calculate(array $rows): array
 		$invalid = [];
 
 		if ($name === '') {
-			$missing[] = 'a content name';
+			$missing[] = 'an item name';
 		} elseif (text_length($name) > MAX_NAME_LENGTH) {
 			$invalid['name'] = 'Use ' . MAX_NAME_LENGTH . ' characters or fewer';
 		}
@@ -280,12 +280,14 @@ function calculate(array $rows): array
 	$headcount = $totalWeeks / WORKING_WEEKS_PER_YEAR;
 
 	if ($counted === 0 && $incomplete === 0) {
-		$summary = 'Add a course to see an estimate.';
+		$summary = 'Add an item to see an estimate.';
 	} else {
-		$summary = ucfirst(number_words($counted)) . ($counted === 1 ? ' course' : ' courses') . ' counted.';
+		$summary = $counted === 0
+			? 'No items counted.'
+			: ucfirst(number_words($counted)) . ($counted === 1 ? ' item' : ' items') . ' counted.';
 		if ($incomplete > 0) {
 			$summary .= ' ' . ucfirst(number_words($incomplete))
-				. ($incomplete === 1 ? ' course is incomplete and is not counted.' : ' courses are incomplete and are not counted.');
+				. ($incomplete === 1 ? ' item is incomplete and is not counted.' : ' items are incomplete and are not counted.');
 		}
 	}
 
@@ -374,7 +376,7 @@ function legacy_rows(): array
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>Capacity calculator · CEdMA Enterprise</title>
-	<meta name="description" content="Estimate the development work your course plans need, as work hours or as developer headcount.">
+	<meta name="description" content="Estimate the development work your training plans need, as work hours or as developer headcount.">
 	<link rel="icon" type="image/svg+xml" href="<?= h(asset('cedma-logomark-rgb.svg')) ?>">
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -394,15 +396,15 @@ function legacy_rows(): array
 		<div class="page-head">
 			<p class="label">Planning tool</p>
 			<h1>Capacity <em>calculator</em></h1>
-			<p class="lead">Estimate how much development work your course plans need, either as work hours or as the number of developers it would take over a year.</p>
+			<p class="lead">Estimate how much development work your training plans need, either as work hours or as the number of developers it would take over a year.</p>
 		</div>
 
 		<noscript>
 			<p class="noscript">This calculator needs JavaScript. Turn it on in your browser settings, then reload the page.</p>
 		</noscript>
 
-		<section aria-labelledby="courses-heading">
-			<h2 id="courses-heading" class="sr-only">Courses</h2>
+		<section aria-labelledby="items-heading">
+			<h2 id="items-heading" class="sr-only">Items</h2>
 			<div class="courses">
 				<table>
 					<colgroup>
@@ -410,7 +412,7 @@ function legacy_rows(): array
 					</colgroup>
 					<thead>
 					<tr>
-						<th scope="col" class="col-name">Content name</th>
+						<th scope="col" class="col-name">Item name</th>
 						<th scope="col" class="col-type">Content type</th>
 						<th scope="col" class="col-duration">Duration</th>
 						<th scope="col" class="col-effort">Level of effort</th>
@@ -424,7 +426,7 @@ function legacy_rows(): array
 			</div>
 
 			<div class="actions">
-				<button type="button" class="btn btn-primary" id="add-row">Add a course</button>
+				<button type="button" class="btn btn-primary" id="add-row">Add an item</button>
 				<span class="row-limit" id="row-limit" role="status"></span>
 				<button type="button" class="btn btn-secondary" id="clear-all">Clear all</button>
 			</div>
@@ -455,14 +457,14 @@ function legacy_rows(): array
 						<dd id="headcount">0.0</dd>
 					</div>
 				</dl>
-				<p class="summary" id="summary" role="status" aria-live="polite">Add a course to see an estimate.</p>
+				<p class="summary" id="summary" role="status" aria-live="polite">Add an item to see an estimate.</p>
 			</div>
 		</section>
 
 		<section class="method" aria-labelledby="method-heading">
 			<h2 id="method-heading">How the estimate works</h2>
 			<p class="formula">Work hours = duration × development hours for the content type × level of effort</p>
-			<p class="formula">AI-assisted courses = work hours less the AI saving for the content type</p>
+			<p class="formula">AI-assisted items = work hours less the AI saving for the content type</p>
 			<p class="formula">Weeks of work = work hours ÷ <?= HOURS_PER_WEEK ?> development hours a week</p>
 			<p class="formula">Headcount = weeks of work ÷ <?= WORKING_WEEKS_PER_YEAR ?> working weeks a year</p>
 			<p>The figures are a planning guide, not a quote. The development hours for each content type are based on published industry figures for new content. The AI savings are planning estimates, not measured figures, and allow for the extra review AI-generated content needs.</p>
@@ -508,7 +510,7 @@ function legacy_rows(): array
 <template id="row-template">
 	<tr>
 		<td class="col-name">
-			<label class="cell-label" data-for="name">Content name<span class="sr-only row-ref"></span></label>
+			<label class="cell-label" data-for="name">Item name<span class="sr-only row-ref"></span></label>
 			<input type="text" data-field="name" maxlength="<?= MAX_NAME_LENGTH ?>" autocomplete="off" spellcheck="true">
 			<p class="field-error" data-error="name"></p>
 			<p class="row-note"></p>

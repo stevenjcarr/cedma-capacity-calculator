@@ -82,13 +82,13 @@
 				label.htmlFor = id;
 				error.id = id + '-error';
 			});
-			tr.querySelectorAll('.row-ref').forEach(function (s) { s.textContent = ', course ' + n; });
-			tr.querySelector('[data-action="remove"]').setAttribute('aria-label', 'Remove course ' + n);
+			tr.querySelectorAll('.row-ref').forEach(function (s) { s.textContent = ', item ' + n; });
+			tr.querySelector('[data-action="remove"]').setAttribute('aria-label', 'Remove item ' + n);
 			tr.querySelector('[data-field="ai"]').id = 'ai-' + n;
 		});
 		var full = rowsEl.rows.length >= MAX_ROWS;
 		addBtn.disabled = full;
-		limitEl.textContent = full ? 'You have reached the limit of ' + MAX_ROWS + ' courses.' : '';
+		limitEl.textContent = full ? 'You have reached the limit of ' + MAX_ROWS + ' items.' : '';
 	}
 
 	function collectRows() {
@@ -240,7 +240,7 @@
 
 	clearBtn.addEventListener('click', function () {
 		var hasData = collectRows().some(function (r) { return !isEmpty(r); });
-		if (hasData && !window.confirm('Clear all courses? This also removes the list saved in this browser.')) return;
+		if (hasData && !window.confirm('Clear all items? This also removes the list saved in this browser.')) return;
 		rowsEl.innerHTML = '';
 		addRow();
 		renumber();
