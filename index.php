@@ -56,7 +56,7 @@ const CONTENT_TYPES = [
 	],
 	'video-produced' => [
 		'label' => 'Video, produced', 'unit' => 'minutes', 'dev_hours_per_unit' => 5.0, 'max' => 6000, 'ai_saving' => 0.1,
-		'description' => 'Scripted, filmed, and edited video.',
+		'description' => 'Scripted video with human presenters or actors, filmed and edited.',
 		'ai_note' => 'AI helps with scripts, storyboards, captions, and rough cuts. Filming and editing are still mostly manual.',
 	],
 	'video-avatar' => [
@@ -226,7 +226,7 @@ function calculate(array $rows): array
 		$invalid = [];
 
 		if ($name === '') {
-			$missing[] = 'a course name';
+			$missing[] = 'a content name';
 		} elseif (text_length($name) > MAX_NAME_LENGTH) {
 			$invalid['name'] = 'Use ' . MAX_NAME_LENGTH . ' characters or fewer';
 		}
@@ -410,7 +410,7 @@ function legacy_rows(): array
 					</colgroup>
 					<thead>
 					<tr>
-						<th scope="col" class="col-name">Course name</th>
+						<th scope="col" class="col-name">Content name</th>
 						<th scope="col" class="col-type">Content type</th>
 						<th scope="col" class="col-duration">Duration</th>
 						<th scope="col" class="col-effort">Level of effort</th>
@@ -508,7 +508,7 @@ function legacy_rows(): array
 <template id="row-template">
 	<tr>
 		<td class="col-name">
-			<label class="cell-label" data-for="name">Course name<span class="sr-only row-ref"></span></label>
+			<label class="cell-label" data-for="name">Content name<span class="sr-only row-ref"></span></label>
 			<input type="text" data-field="name" maxlength="<?= MAX_NAME_LENGTH ?>" autocomplete="off" spellcheck="true">
 			<p class="field-error" data-error="name"></p>
 			<p class="row-note"></p>
