@@ -403,7 +403,12 @@ select {
 	gap: 12px;
 	margin: 20px 0 48px;
 }
-.actions .btn-secondary { margin-left: auto; }
+.actions-end {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	margin-left: auto;
+}
 .row-limit {
 	font-size: 14px;
 	color: var(--text-muted);
@@ -649,7 +654,7 @@ select {
 	.page-head { padding-top: 40px; }
 	.lead { font-size: 18px; }
 	.actions .btn { flex: 1 1 auto; }
-	.actions .btn-secondary { margin-left: 0; }
+	.actions-end { margin-left: 0; flex: 1 1 100%; }
 	.results .emblem { right: -230px; opacity: .24; }
 }
 

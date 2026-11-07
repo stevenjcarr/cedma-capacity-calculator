@@ -21,6 +21,7 @@
 	var template = document.getElementById('row-template');
 	var addBtn = document.getElementById('add-row');
 	var clearBtn = document.getElementById('clear-all');
+	var csvBtn = document.getElementById('download-csv');
 	var limitEl = document.getElementById('row-limit');
 	var weeksEl = document.getElementById('total-weeks');
 	var headcountEl = document.getElementById('headcount');
@@ -141,6 +142,7 @@
 
 	function scheduleCalc() {
 		save();
+		updateCsvButton();
 		clearTimeout(timer);
 		timer = setTimeout(runCalc, 250);
 	}
@@ -238,6 +240,46 @@
 		scheduleCalc();
 	});
 
+	// ---------- CSV download (built on the server) ----------
+
+	function updateCsvButton() {
+		csvBtn.disabled = !collectRows().some(function (r) { return !isEmpty(r); });
+	}
+
+	function localDate() {
+		var d = new Date();
+		var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+		return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+	}
+
+	csvBtn.addEventListener('click', function () {
+		csvBtn.disabled = true;
+		fetch(endpoint, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json', 'Accept': 'text/csv' },
+			body: JSON.stringify({ rows: collectRows(), format: 'csv' })
+		})
+			.then(function (res) {
+				if (!res.ok) throw new Error('HTTP ' + res.status);
+				return res.blob();
+			})
+			.then(function (blob) {
+				var url = URL.createObjectURL(blob);
+				var link = document.createElement('a');
+				link.href = url;
+				link.download = 'cedma-capacity-estimate-' + localDate() + '.csv';
+				document.body.appendChild(link);
+				link.click();
+				link.remove();
+				setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+			})
+			.catch(function () {
+				summaryEl.classList.add('has-incomplete');
+				summaryEl.textContent = 'The CSV file could not be created. Check your connection and try again.';
+			})
+			.then(updateCsvButton);
+	});
+
 	clearBtn.addEventListener('click', function () {
 		var hasData = collectRows().some(function (r) { return !isEmpty(r); });
 		if (hasData && !window.confirm('Clear all items? This also removes the list saved in this browser.')) return;
@@ -245,6 +287,7 @@
 		addRow();
 		renumber();
 		try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* ignore */ }
+		updateCsvButton();
 		rowsEl.querySelector('[data-field="name"]').focus();
 		runCalc();
 	});
@@ -277,5 +320,6 @@
 	setView(savedView, false);
 	renumber();
 	save();
+	updateCsvButton();
 	runCalc();
 })();

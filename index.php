@@ -200,7 +200,11 @@ function parse_duration(string $raw, ?array $type): float|string
 // Calculation
 // -----------------------------------------------------------------------------
 
-function calculate(array $rows): array
+/**
+ * Works out the estimate. With $withDetail, each row also carries the values
+ * the CSV export needs; the page itself never receives these.
+ */
+function calculate(array $rows, bool $withDetail = false): array
 {
 	$totalDevHours = 0.0;
 	$counted = 0;
@@ -224,6 +228,7 @@ function calculate(array $rows): array
 
 		$missing = [];
 		$invalid = [];
+		$detail = ['name' => $name, 'type' => $type, 'duration_raw' => $durationRaw, 'effort' => $effort, 'ai' => $aiAssisted];
 
 		if ($name === '') {
 			$missing[] = 'an item name';
@@ -259,7 +264,11 @@ function calculate(array $rows): array
 		if ($missing || $invalid) {
 			$incomplete++;
 			$note = $missing ? 'Needs ' . join_list($missing) : '';
-			$results[] = ['status' => 'incomplete', 'note' => $note, 'invalid' => (object)$invalid];
+			$result = ['status' => 'incomplete', 'note' => $note, 'invalid' => (object)$invalid];
+			if ($withDetail) {
+				$result['detail'] = $detail + ['duration' => $duration, 'invalid' => $invalid, 'note' => $note];
+			}
+			$results[] = $result;
 			continue;
 		}
 
@@ -269,11 +278,15 @@ function calculate(array $rows): array
 		}
 		$totalDevHours += $devHours;
 		$counted++;
-		$results[] = [
+		$result = [
 			'status' => 'ok',
 			'weeks'  => format_number($devHours / HOURS_PER_WEEK),
 			'hours'  => format_number($devHours, 1),
 		];
+		if ($withDetail) {
+			$result['detail'] = $detail + ['duration' => $duration, 'dev_hours' => $devHours];
+		}
+		$results[] = $result;
 	}
 
 	$totalWeeks = $totalDevHours / HOURS_PER_WEEK;
@@ -291,7 +304,7 @@ function calculate(array $rows): array
 		}
 	}
 
-	return [
+	$output = [
 		'ok'          => true,
 		'rows'        => $results,
 		'total_weeks' => format_number($totalWeeks),
@@ -301,10 +314,108 @@ function calculate(array $rows): array
 		'incomplete'  => $incomplete,
 		'summary'     => $summary,
 	];
+	if ($withDetail) {
+		$output['raw'] = ['dev_hours' => $totalDevHours, 'weeks' => $totalWeeks, 'headcount' => $headcount];
+	}
+	return $output;
 }
 
 // -----------------------------------------------------------------------------
-// Calculation endpoint: POST with a JSON body {"rows": [...]}
+// CSV export
+// -----------------------------------------------------------------------------
+
+/** A number for a spreadsheet: no thousands separator, trailing zeros dropped. */
+function plain_number(float $n, int $maxDecimals): string
+{
+	$s = number_format($n, $maxDecimals, '.', '');
+	if (str_contains($s, '.')) {
+		$s = rtrim(rtrim($s, '0'), '.');
+	}
+	return $s;
+}
+
+/**
+ * One CSV cell. Text that a spreadsheet would treat as a formula is prefixed
+ * with an apostrophe, so a value like "=SUM(A1)" stays as text.
+ */
+function csv_cell(string $value, bool $isText = true): string
+{
+	if ($isText && preg_match('/^[=+\-@\t\r]/', $value)) {
+		$value = "'" . $value;
+	}
+	if (preg_match('/[",\r\n]/', $value)) {
+		$value = '"' . str_replace('"', '""', $value) . '"';
+	}
+	return $value;
+}
+
+/** Each row is a list of [value, isText] pairs, or plain strings for text. */
+function csv_line(array $cells): string
+{
+	return implode(',', array_map(
+		fn($c) => is_array($c) ? csv_cell((string)$c[0], (bool)$c[1]) : csv_cell((string)$c),
+		$cells
+	)) . "\r\n";
+}
+
+function build_csv(array $rows): string
+{
+	$result = calculate($rows, true);
+	$csv = "\xEF\xBB\xBF"; // byte order mark, so Excel reads the file as UTF-8
+	$csv .= csv_line(['Item name', 'Content type', 'Duration', 'Duration unit', 'Level of effort', 'AI assisted', 'Work hours', 'Weeks of work', 'Status']);
+
+	foreach ($result['rows'] as $row) {
+		if ($row['status'] === 'empty') {
+			continue;
+		}
+		$d = $row['detail'];
+		$type = CONTENT_TYPES[$d['type']] ?? null;
+		$effort = EFFORT_LEVELS[$d['effort']] ?? null;
+		$duration = $d['duration'] !== null ? [plain_number($d['duration'], 2), false] : $d['duration_raw'];
+		$ai = $type && $type['ai_saving'] === null ? 'Does not apply' : ($d['ai'] ? 'Yes' : 'No');
+
+		if ($row['status'] === 'ok') {
+			$hours = [plain_number($d['dev_hours'], 1), false];
+			$weeks = [plain_number($d['dev_hours'] / HOURS_PER_WEEK, 2), false];
+			$status = 'Counted';
+		} else {
+			$hours = '';
+			$weeks = '';
+			$reasons = array_filter(array_merge([$d['note']], array_values($d['invalid'])));
+			$status = 'Not counted. ' . implode('. ', $reasons);
+		}
+
+		$csv .= csv_line([
+			$d['name'],
+			$type ? $type['label'] : $d['type'],
+			$duration,
+			$type ? ucfirst(UNITS[$type['unit']]['plural']) : '',
+			$effort ? $effort['label'] : $d['effort'],
+			$ai,
+			$hours,
+			$weeks,
+			$status,
+		]);
+	}
+
+	$raw = $result['raw'];
+	$csv .= "\r\n";
+	$csv .= csv_line(['Total work hours', [plain_number($raw['dev_hours'], 1), false]]);
+	$csv .= csv_line(['Total weeks of work', [plain_number($raw['weeks'], 2), false]]);
+	$csv .= csv_line(['Estimated developer headcount', [number_format($raw['headcount'], 1, '.', ''), false]]);
+	$csv .= csv_line(['Items counted', [(string)$result['counted'], false]]);
+	$csv .= csv_line(['Items not counted', [(string)$result['incomplete'], false]]);
+	$csv .= "\r\n";
+	$csv .= csv_line(['Development hours a week', [(string)HOURS_PER_WEEK, false]]);
+	$csv .= csv_line(['Working weeks a year', [(string)WORKING_WEEKS_PER_YEAR, false]]);
+	$csv .= csv_line(['Exported', gmdate('j F Y')]);
+	$csv .= csv_line(['Source', 'CEdMA Enterprise capacity calculator']);
+	return $csv;
+}
+
+// -----------------------------------------------------------------------------
+// Calculation endpoint: POST with a JSON body {"rows": [...]}, and
+// "format": "csv" to download the list as a CSV file instead
 // -----------------------------------------------------------------------------
 
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
@@ -323,6 +434,13 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
 	if (!is_array($data) || !isset($data['rows']) || !is_array($data['rows'])) {
 		http_response_code(400);
 		echo json_encode(['ok' => false, 'error' => 'Invalid request']);
+		exit;
+	}
+
+	if (($data['format'] ?? '') === 'csv') {
+		header('Content-Type: text/csv; charset=utf-8');
+		header('Content-Disposition: attachment; filename="cedma-capacity-estimate-' . gmdate('Y-m-d') . '.csv"');
+		echo build_csv(array_values($data['rows']));
 		exit;
 	}
 
@@ -428,7 +546,10 @@ function legacy_rows(): array
 			<div class="actions">
 				<button type="button" class="btn btn-primary" id="add-row">Add an item</button>
 				<span class="row-limit" id="row-limit" role="status"></span>
-				<button type="button" class="btn btn-secondary" id="clear-all">Clear all</button>
+				<div class="actions-end">
+					<button type="button" class="btn btn-secondary" id="download-csv">Download CSV</button>
+					<button type="button" class="btn btn-secondary" id="clear-all">Clear all</button>
+				</div>
 			</div>
 		</section>
 

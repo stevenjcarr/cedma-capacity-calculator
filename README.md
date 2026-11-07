@@ -57,6 +57,12 @@ To add another content type, add a line to `CONTENT_TYPES`. A new unit also need
 
 The labels in the dropdowns come from the same settings, so a change there updates the page as well. The explanation on the page, including which units each content type uses, is built from these settings too.
 
+## Downloading a CSV file
+
+The **Download CSV** button saves the list as a CSV file, named with the day's date, which opens in Excel, Google Sheets, or Numbers. The file is built in `index.php` from the same calculation as the page, so the figures always match. It has one row per item, with its content type, duration and unit, level of effort, whether it is AI assisted, its work hours and weeks, and whether it was counted (with the reason if not). Below the items are the totals (work hours, weeks, headcount, and how many items were and were not counted), followed by the hours a week and working weeks a year the estimate uses.
+
+Numbers are written without thousands separators so spreadsheets treat them as numbers. Item names that a spreadsheet would read as a formula, such as one starting with `=`, are saved as text.
+
 ## Saved data
 
 Each person's list is saved in their own browser (local storage), so it is still there when they come back. Nothing is stored on the server. Lists saved by the previous version of the calculator, which used a cookie, are converted the first time someone visits.
