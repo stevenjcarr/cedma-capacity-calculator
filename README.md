@@ -16,6 +16,7 @@ People enter each item with its content type, its duration, the level of effort,
 | `index.php` | The page, and the calculation endpoint it posts to |
 | `assets/calculator.css` | Styles, following the CEdMA Enterprise Brand Guidelines v2.2 |
 | `assets/calculator.js` | Table editing, saving in the browser, and calls to `index.php` |
+| `assets/fonts.css` and `assets/fonts/` | The brand fonts (Cormorant Garamond, Albert Sans, and DM Mono) in the weights the page uses, with their SIL Open Font License files |
 | `assets/*.svg` | Logo artwork (Color dark full logo, Color dark logomark for the emblem, Color logomark for the favicon) |
 
 ## Requirements
@@ -24,7 +25,7 @@ PHP 8.0 or later, with the standard JSON and PCRE support. It has been tested on
 
 ## Deploying
 
-Upload `index.php` and the `assets` folder to the same directory on the web server. The fonts load from Google Fonts.
+Upload `index.php` and the `assets` folder to the same directory on the web server. Everything the page needs is in that folder, including the brand fonts, so nothing loads from another site.
 
 ## Changing the figures
 

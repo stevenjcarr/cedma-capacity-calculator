@@ -378,9 +378,9 @@ function legacy_rows(): array
 	<title>Capacity calculator · CEdMA Enterprise</title>
 	<meta name="description" content="Estimate the development work your training plans need, as work hours or as developer headcount.">
 	<link rel="icon" type="image/svg+xml" href="<?= h(asset('cedma-logomark-rgb.svg')) ?>">
-	<link rel="preconnect" href="https://fonts.googleapis.com">
-	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-	<link href="https://fonts.googleapis.com/css2?family=Albert+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+	<link rel="preload" href="assets/fonts/albert-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+	<link rel="preload" href="assets/fonts/cormorant-garamond-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+	<link rel="stylesheet" href="<?= h(asset('fonts.css')) ?>">
 	<link rel="stylesheet" href="<?= h(asset('calculator.css')) ?>">
 </head>
 <body>
