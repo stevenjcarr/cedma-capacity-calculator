@@ -190,8 +190,8 @@ tbody td {
 }
 tbody tr:first-child td { border-top: 0; }
 
-col.c-hours  { width: 124px; }
-col.c-type   { width: 184px; }
+col.c-type     { width: 184px; }
+col.c-duration { width: 136px; }
 col.c-effort { width: 340px; }
 col.c-weeks  { width: 100px; }
 col.c-remove { width: 108px; }
@@ -247,6 +247,22 @@ select {
 	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%231C2B3A' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 	background-repeat: no-repeat;
 	background-position: right 12px center;
+}
+
+/* Duration with its unit (hrs or mins) inside the field */
+.duration { position: relative; }
+.duration input[type="text"] { padding-right: 52px; }
+.duration-unit {
+	position: absolute;
+	top: 0;
+	right: 12px;
+	height: 44px;
+	display: flex;
+	align-items: center;
+	font-family: var(--font-mono);
+	font-size: 13px;
+	color: var(--text-muted);
+	pointer-events: none;
 }
 
 [aria-invalid="true"] {

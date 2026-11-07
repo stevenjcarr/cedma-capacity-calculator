@@ -3,8 +3,8 @@
  * CEdMA Enterprise capacity calculator
  *
  * The browser sends the course list to this file, and the calculation runs
- * here on the server. Styles, script, and logos are in assets/. The multipliers below are never
- * sent to the browser; the page only ever receives the results.
+ * here on the server. Styles, script, and logos are in assets/. The ratios
+ * below are never sent to the browser; the page only ever receives results.
  */
 declare(strict_types=1);
 
@@ -12,10 +12,19 @@ declare(strict_types=1);
 // Calculation settings (server-side only)
 // -----------------------------------------------------------------------------
 
-// Weeks of development per hour of finished content.
+// Each content type has the unit its duration is entered in, the hours of
+// development needed per unit of finished content, and the largest duration
+// accepted. For example, one minute of finished video takes five hours to develop.
 const CONTENT_TYPES = [
-	'ilt'  => ['label' => 'Instructor-led', 'weeks_per_hour' => 1.0],
-	'self' => ['label' => 'Self-paced',     'weeks_per_hour' => 2.0],
+	'ilt'   => ['label' => 'Instructor-led', 'unit' => 'hours',   'dev_hours_per_unit' => 40.0, 'max' => 1000],
+	'self'  => ['label' => 'Self-paced',     'unit' => 'hours',   'dev_hours_per_unit' => 80.0, 'max' => 1000],
+	'video' => ['label' => 'Video',          'unit' => 'minutes', 'dev_hours_per_unit' => 5.0,  'max' => 6000],
+];
+
+// Words for each unit, for labels and messages.
+const UNITS = [
+	'hours'   => ['plural' => 'hours',   'short' => 'hrs'],
+	'minutes' => ['plural' => 'minutes', 'short' => 'mins'],
 ];
 
 // Share of the content that is being created or reworked.
@@ -28,12 +37,12 @@ const EFFORT_LEVELS = [
 
 const WORKING_WEEKS_PER_YEAR = 45;
 
-// Working hours in one week of development, for the work hours view.
+// Working hours in one week of development. Development hours are divided by
+// this to give weeks of work, which the headcount is based on.
 const HOURS_PER_WEEK = 40;
 
 // Limits
 const MAX_ROWS = 200;
-const MAX_HOURS = 1000;
 const MAX_NAME_LENGTH = 200;
 const MAX_REQUEST_BYTES = 262144; // 256KB
 
@@ -112,21 +121,42 @@ function join_list(array $items): string
 	return implode(', ', array_slice($items, 0, -1)) . ', and ' . $items[$count - 1];
 }
 
-/** Returns hours as a float, or an error message. */
-function parse_hours(string $raw): float|string
+/**
+ * Returns the duration as a float, or an error message. $type is the content
+ * type's settings, or null when no valid type has been chosen yet.
+ */
+function parse_duration(string $raw, ?array $type): float|string
 {
+	$unit = $type ? UNITS[$type['unit']]['plural'] : null;
 	$s = str_replace(',', '.', $raw);
 	if (!preg_match('/^\d+(?:\.\d+)?$/', $s)) {
-		return 'Enter a number of hours, such as 4 or 1.5';
+		return $unit ? "Enter a number of $unit, such as 4 or 1.5" : 'Enter a number, such as 4 or 1.5';
 	}
-	$hours = (float)$s;
-	if ($hours <= 0) {
+	$value = (float)$s;
+	if ($value <= 0) {
 		return 'Enter a duration greater than zero';
 	}
-	if ($hours > MAX_HOURS) {
-		return 'Enter ' . format_number(MAX_HOURS) . ' hours or fewer';
+	if ($type && $value > $type['max']) {
+		return 'Enter ' . format_number((float)$type['max']) . " $unit or fewer";
 	}
-	return $hours;
+	return $value;
+}
+
+/** Plain sentence saying which units the durations are entered in. */
+function duration_units_sentence(): string
+{
+	$byUnit = [];
+	foreach (CONTENT_TYPES as $type) {
+		$byUnit[UNITS[$type['unit']]['plural']][] = strtolower($type['label']);
+	}
+	if (count($byUnit) === 1) {
+		return 'Durations are in ' . array_key_first($byUnit) . '.';
+	}
+	$parts = [];
+	foreach ($byUnit as $unit => $labels) {
+		$parts[] = ucfirst(join_list($labels)) . ' durations are in ' . $unit . '.';
+	}
+	return implode(' ', $parts);
 }
 
 // -----------------------------------------------------------------------------
@@ -135,7 +165,7 @@ function parse_hours(string $raw): float|string
 
 function calculate(array $rows): array
 {
-	$totalWeeks = 0.0;
+	$totalDevHours = 0.0;
 	$counted = 0;
 	$incomplete = 0;
 	$results = [];
@@ -143,11 +173,12 @@ function calculate(array $rows): array
 	foreach (array_slice($rows, 0, MAX_ROWS) as $row) {
 		$row = is_array($row) ? $row : [];
 		$name = as_text($row['name'] ?? '');
-		$hoursRaw = as_text($row['hours'] ?? '');
+		// "hours" is the field name used before durations could be in minutes
+		$durationRaw = as_text($row['duration'] ?? $row['hours'] ?? '');
 		$type = as_text($row['type'] ?? '');
 		$effort = as_text($row['effort'] ?? '');
 
-		if ($name === '' && $hoursRaw === '' && $type === '' && $effort === '') {
+		if ($name === '' && $durationRaw === '' && $type === '' && $effort === '') {
 			$results[] = ['status' => 'empty'];
 			continue;
 		}
@@ -161,22 +192,23 @@ function calculate(array $rows): array
 			$invalid['name'] = 'Use ' . MAX_NAME_LENGTH . ' characters or fewer';
 		}
 
-		$hours = null;
-		if ($hoursRaw === '') {
-			$missing[] = 'a duration';
-		} else {
-			$parsed = parse_hours($hoursRaw);
-			if (is_string($parsed)) {
-				$invalid['hours'] = $parsed;
-			} else {
-				$hours = $parsed;
-			}
-		}
-
 		if ($type === '') {
 			$missing[] = 'a content type';
 		} elseif (!isset(CONTENT_TYPES[$type])) {
 			$invalid['type'] = 'Choose a content type from the list';
+		}
+		$typeSettings = CONTENT_TYPES[$type] ?? null;
+
+		$duration = null;
+		if ($durationRaw === '') {
+			$missing[] = 'a duration';
+		} else {
+			$parsed = parse_duration($durationRaw, $typeSettings);
+			if (is_string($parsed)) {
+				$invalid['duration'] = $parsed;
+			} else {
+				$duration = $parsed;
+			}
 		}
 
 		if ($effort === '') {
@@ -192,16 +224,17 @@ function calculate(array $rows): array
 			continue;
 		}
 
-		$weeks = $hours * CONTENT_TYPES[$type]['weeks_per_hour'] * EFFORT_LEVELS[$effort]['factor'];
-		$totalWeeks += $weeks;
+		$devHours = $duration * $typeSettings['dev_hours_per_unit'] * EFFORT_LEVELS[$effort]['factor'];
+		$totalDevHours += $devHours;
 		$counted++;
 		$results[] = [
 			'status' => 'ok',
-			'weeks'  => format_number($weeks),
-			'hours'  => format_number($weeks * HOURS_PER_WEEK, 1),
+			'weeks'  => format_number($devHours / HOURS_PER_WEEK),
+			'hours'  => format_number($devHours, 1),
 		];
 	}
 
+	$totalWeeks = $totalDevHours / HOURS_PER_WEEK;
 	$headcount = $totalWeeks / WORKING_WEEKS_PER_YEAR;
 
 	if ($counted === 0 && $incomplete === 0) {
@@ -218,7 +251,7 @@ function calculate(array $rows): array
 		'ok'          => true,
 		'rows'        => $results,
 		'total_weeks' => format_number($totalWeeks),
-		'total_hours' => format_number($totalWeeks * HOURS_PER_WEEK, 1),
+		'total_hours' => format_number($totalDevHours, 1),
 		'headcount'   => number_format($headcount, 1, '.', ','),
 		'counted'     => $counted,
 		'incomplete'  => $incomplete,
@@ -283,10 +316,10 @@ function legacy_rows(): array
 			continue;
 		}
 		$rows[] = [
-			'name'   => text_cut(as_text($row['course_name'] ?? ''), MAX_NAME_LENGTH),
-			'hours'  => text_cut(as_text($row['duration_hours'] ?? ''), 20),
-			'type'   => $types[as_text($row['content_type'] ?? '')] ?? '',
-			'effort' => $efforts[as_text($row['level_of_effort'] ?? '')] ?? '',
+			'name'     => text_cut(as_text($row['course_name'] ?? ''), MAX_NAME_LENGTH),
+			'duration' => text_cut(as_text($row['duration_hours'] ?? ''), 20),
+			'type'     => $types[as_text($row['content_type'] ?? '')] ?? '',
+			'effort'   => $efforts[as_text($row['level_of_effort'] ?? '')] ?? '',
 		];
 	}
 	return $rows;
@@ -298,7 +331,7 @@ function legacy_rows(): array
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>Capacity calculator · CEdMA Enterprise</title>
-	<meta name="description" content="Estimate the weeks of development work and the developer headcount your course plans need.">
+	<meta name="description" content="Estimate the development work your course plans need, as work hours or as developer headcount.">
 	<link rel="icon" type="image/svg+xml" href="<?= h(asset('cedma-logomark-rgb.svg')) ?>">
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -330,13 +363,13 @@ function legacy_rows(): array
 			<div class="courses">
 				<table>
 					<colgroup>
-						<col class="c-name"><col class="c-hours"><col class="c-type"><col class="c-effort"><col class="c-weeks"><col class="c-remove">
+						<col class="c-name"><col class="c-type"><col class="c-duration"><col class="c-effort"><col class="c-weeks"><col class="c-remove">
 					</colgroup>
 					<thead>
 					<tr>
 						<th scope="col" class="col-name">Course name</th>
-						<th scope="col" class="col-hours">Duration (hours)</th>
 						<th scope="col" class="col-type">Content type</th>
+						<th scope="col" class="col-duration">Duration</th>
 						<th scope="col" class="col-effort">Level of effort</th>
 						<th scope="col" class="col-weeks num" id="unit-heading">Weeks</th>
 						<th scope="col" class="col-remove"><span class="sr-only">Remove</span></th>
@@ -384,9 +417,10 @@ function legacy_rows(): array
 
 		<section class="method" aria-labelledby="method-heading">
 			<h2 id="method-heading">How the estimate works</h2>
-			<p class="formula">Weeks of work = duration × content type × level of effort</p>
-			<p class="formula">Work hours = total weeks × <?= HOURS_PER_WEEK ?> hours a week</p>
-			<p class="formula">Headcount = total weeks ÷ <?= WORKING_WEEKS_PER_YEAR ?> working weeks a year</p>
+			<p class="formula">Work hours = duration × development hours for the content type × level of effort</p>
+			<p class="formula">Weeks of work = work hours ÷ <?= HOURS_PER_WEEK ?> hours a week</p>
+			<p class="formula">Headcount = weeks of work ÷ <?= WORKING_WEEKS_PER_YEAR ?> working weeks a year</p>
+			<p><?= h(duration_units_sentence()) ?></p>
 			<p>The figures are a planning guide, not a quote. Compare the work hours with the time your team actually has free for development. The headcount assumes each developer spends their whole working year on development, so allow for reviews, meetings, and time off when you use it.</p>
 			<p>For background on development ratios, <a href="https://www.td.org/content/atd-blog/how-long-does-it-take-to-develop-training-new-question-new-answers">read the ATD article on how long training takes to develop</a>.</p>
 		</section>
@@ -408,20 +442,23 @@ function legacy_rows(): array
 			<p class="field-error" data-error="name"></p>
 			<p class="row-note"></p>
 		</td>
-		<td class="col-hours">
-			<label class="cell-label" data-for="hours">Duration (hours)<span class="sr-only row-ref"></span></label>
-			<input type="text" data-field="hours" inputmode="decimal" autocomplete="off">
-			<p class="field-error" data-error="hours"></p>
-		</td>
 		<td class="col-type">
 			<label class="cell-label" data-for="type">Content type<span class="sr-only row-ref"></span></label>
 			<select data-field="type">
-				<option value="">Choose</option>
+				<option value="" data-unit="<?= h(UNITS['hours']['plural']) ?>" data-unit-short="<?= h(UNITS['hours']['short']) ?>">Choose</option>
 				<?php foreach (CONTENT_TYPES as $key => $item): ?>
-				<option value="<?= h($key) ?>"><?= h($item['label']) ?></option>
+				<option value="<?= h($key) ?>" data-unit="<?= h(UNITS[$item['unit']]['plural']) ?>" data-unit-short="<?= h(UNITS[$item['unit']]['short']) ?>"><?= h($item['label']) ?></option>
 				<?php endforeach; ?>
 			</select>
 			<p class="field-error" data-error="type"></p>
+		</td>
+		<td class="col-duration">
+			<label class="cell-label" data-for="duration">Duration<span class="sr-only"> in <span class="duration-unit-text">hours</span></span><span class="sr-only row-ref"></span></label>
+			<div class="duration">
+				<input type="text" data-field="duration" inputmode="decimal" autocomplete="off">
+				<span class="duration-unit" aria-hidden="true">hrs</span>
+			</div>
+			<p class="field-error" data-error="duration"></p>
 		</td>
 		<td class="col-effort">
 			<label class="cell-label" data-for="effort">Level of effort<span class="sr-only row-ref"></span></label>

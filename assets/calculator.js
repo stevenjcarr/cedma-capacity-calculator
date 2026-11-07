@@ -11,7 +11,7 @@
 
 	var STORAGE_KEY = 'cedma-capacity-calculator-v1';
 	var MAX_ROWS = config.maxRows || 200;
-	var FIELDS = ['name', 'hours', 'type', 'effort'];
+	var FIELDS = ['name', 'type', 'duration', 'effort'];
 	var LEGACY_COOKIE = config.legacyCookie || 'ctc_items_v3';
 	var LEGACY_ROWS = Array.isArray(config.legacyRows) ? config.legacyRows : [];
 
@@ -38,6 +38,8 @@
 		if (rowsEl.rows.length >= MAX_ROWS) return null;
 		var tr = template.content.firstElementChild.cloneNode(true);
 		data = data || {};
+		// Lists saved before video was added call the duration "hours"
+		if (data.duration == null && data.hours != null) data.duration = data.hours;
 		FIELDS.forEach(function (f) {
 			var el = tr.querySelector('[data-field="' + f + '"]');
 			var value = data[f] == null ? '' : String(data[f]);
@@ -45,8 +47,17 @@
 			el.value = value;
 		});
 		tr.querySelector('.unit-label').textContent = view === 'hours' ? 'Hours' : 'Weeks';
+		updateDurationUnit(tr);
 		rowsEl.appendChild(tr);
 		return tr;
+	}
+
+	// Shows hours or minutes beside the duration, to match the content type.
+	function updateDurationUnit(tr) {
+		var select = tr.querySelector('[data-field="type"]');
+		var option = select.options[select.selectedIndex] || select.options[0];
+		tr.querySelector('.duration-unit').textContent = option.getAttribute('data-unit-short');
+		tr.querySelector('.duration-unit-text').textContent = option.getAttribute('data-unit');
 	}
 
 	function renumber() {
@@ -184,7 +195,10 @@
 	// ---------- Events ----------
 
 	rowsEl.addEventListener('input', scheduleCalc);
-	rowsEl.addEventListener('change', scheduleCalc);
+	rowsEl.addEventListener('change', function (e) {
+		if (e.target.matches('[data-field="type"]')) updateDurationUnit(e.target.closest('tr'));
+		scheduleCalc();
+	});
 
 	rowsEl.addEventListener('click', function (e) {
 		var btn = e.target.closest('[data-action="remove"]');
@@ -197,6 +211,7 @@
 			(next ? next.querySelector('[data-action="remove"]') : addBtn).focus();
 		} else {
 			FIELDS.forEach(function (f) { tr.querySelector('[data-field="' + f + '"]').value = ''; });
+			updateDurationUnit(tr);
 			tr.querySelector('[data-field="name"]').focus();
 		}
 		scheduleCalc();

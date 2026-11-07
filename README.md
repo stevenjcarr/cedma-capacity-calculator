@@ -7,7 +7,7 @@ A small web app that estimates how much development work a list of courses needs
 
 Each person's choice of view is remembered in their browser.
 
-People enter each course with its duration in hours, its content type, and the level of effort. The page sends the list to `index.php`, which does the calculation and returns the results. The multipliers stay on the server and are never sent to the browser, although the page explains the formula.
+People enter each course with its content type, its duration, and the level of effort. Durations are in hours, apart from video, which is in minutes. The page sends the list to `index.php`, which does the calculation and returns the results. The multipliers stay on the server and are never sent to the browser, although the page explains the formula.
 
 ## Files
 
@@ -30,12 +30,16 @@ Upload `index.php` and the `assets` folder to the same directory on the web serv
 
 The settings are at the top of `index.php`:
 
-- `CONTENT_TYPES` sets the weeks of development per hour of finished content for each content type.
+- `CONTENT_TYPES` lists the content types. Each one has the unit its duration is entered in (`hours` or `minutes`), the hours of development per unit of finished content (`dev_hours_per_unit`), and the longest duration accepted (`max`). Instructor-led is 40 development hours per hour, self-paced is 80 per hour, and video is five per minute.
 - `EFFORT_LEVELS` sets the share of the content being created or reworked for each level of effort.
+- `HOURS_PER_WEEK` sets the hours in a week of development. Development hours are divided by this to give weeks of work.
 - `WORKING_WEEKS_PER_YEAR` sets the working year used for the headcount.
-- `HOURS_PER_WEEK` sets the hours in a week of development, used for the work hours view.
 
-The labels in the dropdowns come from the same settings, so a change there updates the page as well. If you change the working year or the hours in a week, the explanation on the page updates with it.
+The calculation is: work hours = duration × development hours per unit × level of effort; weeks = work hours ÷ `HOURS_PER_WEEK`; headcount = weeks ÷ `WORKING_WEEKS_PER_YEAR`.
+
+To add another content type, add a line to `CONTENT_TYPES`. A new unit also needs an entry in `UNITS`.
+
+The labels in the dropdowns come from the same settings, so a change there updates the page as well. The explanation on the page, including which units each content type uses, is built from these settings too.
 
 ## Saved data
 
