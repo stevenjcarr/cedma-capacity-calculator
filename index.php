@@ -12,39 +12,57 @@ declare(strict_types=1);
 // Calculation settings (server-side only)
 // -----------------------------------------------------------------------------
 
-// Each content type has the unit its duration is entered in, the hours of
-// development needed per unit of finished new content (based on published
-// industry figures), and the largest duration accepted. For example, one minute
-// of finished produced video takes five hours to develop. The description is
-// shown on the page to help people choose.
+// Each content type has:
+//   unit                the unit its duration is entered in
+//   dev_hours_per_unit  hours of development per unit of finished new content,
+//                       based on published industry figures
+//   max                 the longest duration accepted
+//   ai_saving           the reduction when a course is marked AI assisted, or
+//                       null where the option does not apply
+//   description, ai_note  shown in the content types table on the page
+// For example, one minute of finished produced video takes five hours to develop.
+// The AI savings are planning estimates that allow for the extra review
+// AI-generated content needs.
 const CONTENT_TYPES = [
 	'ilt' => [
-		'label' => 'Instructor-led', 'unit' => 'hours', 'dev_hours_per_unit' => 40.0, 'max' => 1000,
+		'label' => 'Instructor-led', 'unit' => 'hours', 'dev_hours_per_unit' => 40.0, 'max' => 1000, 'ai_saving' => 0.1,
 		'description' => 'In-person training with a facilitator guide, participant materials, and slides.',
+		'ai_note' => 'AI helps draft slides, facilitator guides, and participant materials. Design and subject expert time stay much the same.',
 	],
 	'vilt' => [
-		'label' => 'Virtual instructor-led', 'unit' => 'hours', 'dev_hours_per_unit' => 40.0, 'max' => 1000,
+		'label' => 'Virtual instructor-led', 'unit' => 'hours', 'dev_hours_per_unit' => 40.0, 'max' => 1000, 'ai_saving' => 0.1,
 		'description' => 'Live online training designed for virtual delivery.',
+		'ai_note' => 'AI helps draft slides, facilitator guides, and online activities. Design and subject expert time stay much the same.',
 	],
 	'elearning-read' => [
-		'label' => 'E-learning, read', 'unit' => 'hours', 'dev_hours_per_unit' => 50.0, 'max' => 1000,
+		'label' => 'E-learning, read', 'unit' => 'hours', 'dev_hours_per_unit' => 50.0, 'max' => 1000, 'ai_saving' => 0.2,
 		'description' => 'Mostly text, images, and narration, with a quiz at the end.',
+		'ai_note' => 'AI helps write the text, generate narration, and draft quiz questions, with time added back for review.',
 	],
 	'elearning-interactive' => [
-		'label' => 'E-learning, interactive', 'unit' => 'hours', 'dev_hours_per_unit' => 80.0, 'max' => 1000,
+		'label' => 'E-learning, interactive', 'unit' => 'hours', 'dev_hours_per_unit' => 80.0, 'max' => 1000, 'ai_saving' => 0.2,
 		'description' => 'Regular activities such as drag and drop, knowledge checks, and short scenarios.',
+		'ai_note' => 'AI helps write the content, narration, and knowledge checks. Designing and building the activities is still mostly manual.',
 	],
 	'elearning-simulation' => [
-		'label' => 'E-learning, simulation', 'unit' => 'hours', 'dev_hours_per_unit' => 200.0, 'max' => 1000,
+		'label' => 'E-learning, simulation', 'unit' => 'hours', 'dev_hours_per_unit' => 200.0, 'max' => 1000, 'ai_saving' => 0.1,
 		'description' => 'Software simulations, branching scenarios, or games built around realistic practice.',
+		'ai_note' => 'AI helps write scripts and scenarios. Building and testing the simulation is still mostly manual.',
 	],
 	'video-recorded' => [
-		'label' => 'Video, recorded', 'unit' => 'minutes', 'dev_hours_per_unit' => 1.0, 'max' => 6000,
+		'label' => 'Video, recorded', 'unit' => 'minutes', 'dev_hours_per_unit' => 1.0, 'max' => 6000, 'ai_saving' => 0.2,
 		'description' => 'Webinar recordings and screen captures with light editing.',
+		'ai_note' => 'AI helps with editing, captions, and transcripts, and removes pauses and filler words.',
 	],
 	'video-produced' => [
-		'label' => 'Video, produced', 'unit' => 'minutes', 'dev_hours_per_unit' => 5.0, 'max' => 6000,
+		'label' => 'Video, produced', 'unit' => 'minutes', 'dev_hours_per_unit' => 5.0, 'max' => 6000, 'ai_saving' => 0.1,
 		'description' => 'Scripted, filmed, and edited video.',
+		'ai_note' => 'AI helps with scripts, storyboards, captions, and rough cuts. Filming and editing are still mostly manual.',
+	],
+	'video-avatar' => [
+		'label' => 'Video, AI avatar', 'unit' => 'minutes', 'dev_hours_per_unit' => 3.0, 'max' => 6000, 'ai_saving' => null,
+		'description' => 'Video presented by an AI avatar with a synthetic voice, made with an AI video tool.',
+		'ai_note' => 'Already made with AI, so the AI assisted option does not apply.',
 	],
 ];
 
@@ -54,9 +72,6 @@ const TYPE_ALIASES = [
 	'video' => 'video-produced',
 ];
 
-// Reduction in development time for a course marked as AI assisted. This is a
-// planning estimate that allows for the extra review AI-generated content needs.
-const AI_SAVING = 0.2;
 
 // Words for each unit, for labels and messages.
 const UNITS = [
@@ -249,8 +264,8 @@ function calculate(array $rows): array
 		}
 
 		$devHours = $duration * $typeSettings['dev_hours_per_unit'] * EFFORT_LEVELS[$effort]['factor'];
-		if ($aiAssisted) {
-			$devHours *= 1 - AI_SAVING;
+		if ($aiAssisted && $typeSettings['ai_saving'] !== null) {
+			$devHours *= 1 - $typeSettings['ai_saving'];
 		}
 		$totalDevHours += $devHours;
 		$counted++;
@@ -447,21 +462,37 @@ function legacy_rows(): array
 		<section class="method" aria-labelledby="method-heading">
 			<h2 id="method-heading">How the estimate works</h2>
 			<p class="formula">Work hours = duration × development hours for the content type × level of effort</p>
-			<p class="formula">AI-assisted courses = work hours less <?= (int)round(AI_SAVING * 100) ?>%</p>
+			<p class="formula">AI-assisted courses = work hours less the AI saving for the content type</p>
 			<p class="formula">Weeks of work = work hours ÷ <?= HOURS_PER_WEEK ?> development hours a week</p>
 			<p class="formula">Headcount = weeks of work ÷ <?= WORKING_WEEKS_PER_YEAR ?> working weeks a year</p>
-			<p>The figures are a planning guide, not a quote. The development hours for each content type are based on published industry figures for new content. The <?= (int)round(AI_SAVING * 100) ?>% AI saving is a planning estimate, not a measured figure, and allows for the extra review AI-generated content needs.</p>
+			<p>The figures are a planning guide, not a quote. The development hours for each content type are based on published industry figures for new content. The AI savings are planning estimates, not measured figures, and allow for the extra review AI-generated content needs.</p>
 			<p>A week of work is <?= HOURS_PER_WEEK ?> hours of development, which allows for the meetings, reviews, and admin in a normal working week. The <?= WORKING_WEEKS_PER_YEAR ?> working weeks a year allow for holidays and leave. To show a backlog, compare the work hours with the time your team actually has free for development.</p>
 			<h2 id="types-heading">Content types</h2>
-			<p>Durations are in hours, apart from video, which is in minutes.</p>
-			<dl class="types">
-				<?php foreach (CONTENT_TYPES as $item): ?>
-				<div>
-					<dt><?= h($item['label']) ?></dt>
-					<dd><?= h($item['description']) ?></dd>
-				</div>
-				<?php endforeach; ?>
-			</dl>
+			<p>What each content type covers, and what the AI assisted option means for it.</p>
+			<div class="types-wrap">
+				<table class="types-table">
+					<thead>
+					<tr>
+						<th scope="col">Content type</th>
+						<th scope="col">Duration in</th>
+						<th scope="col">What it covers</th>
+						<th scope="col">With AI assisted</th>
+						<th scope="col" class="num">AI saving</th>
+					</tr>
+					</thead>
+					<tbody>
+					<?php foreach (CONTENT_TYPES as $item): ?>
+					<tr>
+						<th scope="row" data-label="Content type"><?= h($item['label']) ?></th>
+						<td data-label="Duration in"><?= h(ucfirst(UNITS[$item['unit']]['plural'])) ?></td>
+						<td data-label="What it covers"><?= h($item['description']) ?></td>
+						<td data-label="With AI assisted"><?= h($item['ai_note']) ?></td>
+						<td data-label="AI saving" class="num<?= $item['ai_saving'] === null ? ' na' : '' ?>"><?= $item['ai_saving'] === null ? 'Does not apply' : h((string)(int)round($item['ai_saving'] * 100)) . '%' ?></td>
+					</tr>
+					<?php endforeach; ?>
+					</tbody>
+				</table>
+			</div>
 			<p>For background on development ratios, <a href="https://www.td.org/content/atd-blog/how-long-does-it-take-to-develop-training-new-question-new-answers">read the ATD article on how long training takes to develop</a>.</p>
 		</section>
 	</div>
@@ -487,7 +518,7 @@ function legacy_rows(): array
 			<select data-field="type">
 				<option value="" data-unit="<?= h(UNITS['hours']['plural']) ?>" data-unit-short="<?= h(UNITS['hours']['short']) ?>">Choose</option>
 				<?php foreach (CONTENT_TYPES as $key => $item): ?>
-				<option value="<?= h($key) ?>" data-unit="<?= h(UNITS[$item['unit']]['plural']) ?>" data-unit-short="<?= h(UNITS[$item['unit']]['short']) ?>"><?= h($item['label']) ?></option>
+				<option value="<?= h($key) ?>" data-ai="<?= $item['ai_saving'] === null ? 'no' : 'yes' ?>" data-unit="<?= h(UNITS[$item['unit']]['plural']) ?>" data-unit-short="<?= h(UNITS[$item['unit']]['short']) ?>"><?= h($item['label']) ?></option>
 				<?php endforeach; ?>
 			</select>
 			<p class="field-error" data-error="type"></p>

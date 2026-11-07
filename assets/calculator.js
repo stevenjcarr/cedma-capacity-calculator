@@ -56,12 +56,18 @@
 		return tr;
 	}
 
-	// Shows hours or minutes beside the duration, to match the content type.
+	// Shows hours or minutes beside the duration to match the content type, and
+	// turns off the AI assisted option for types already made with AI.
 	function updateDurationUnit(tr) {
 		var select = tr.querySelector('[data-field="type"]');
 		var option = select.options[select.selectedIndex] || select.options[0];
 		tr.querySelector('.duration-unit').textContent = option.getAttribute('data-unit-short');
 		tr.querySelector('.duration-unit-text').textContent = option.getAttribute('data-unit');
+		var ai = tr.querySelector('[data-field="ai"]');
+		var aiApplies = option.getAttribute('data-ai') !== 'no';
+		ai.disabled = !aiApplies;
+		if (!aiApplies) ai.checked = false;
+		ai.title = aiApplies ? '' : 'Already made with AI, so this does not apply';
 	}
 
 	function renumber() {
