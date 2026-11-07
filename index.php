@@ -13,13 +13,50 @@ declare(strict_types=1);
 // -----------------------------------------------------------------------------
 
 // Each content type has the unit its duration is entered in, the hours of
-// development needed per unit of finished content, and the largest duration
-// accepted. For example, one minute of finished video takes five hours to develop.
+// development needed per unit of finished new content (based on published
+// industry figures), and the largest duration accepted. For example, one minute
+// of finished produced video takes five hours to develop. The description is
+// shown on the page to help people choose.
 const CONTENT_TYPES = [
-	'ilt'   => ['label' => 'Instructor-led', 'unit' => 'hours',   'dev_hours_per_unit' => 40.0, 'max' => 1000],
-	'self'  => ['label' => 'Self-paced',     'unit' => 'hours',   'dev_hours_per_unit' => 80.0, 'max' => 1000],
-	'video' => ['label' => 'Video',          'unit' => 'minutes', 'dev_hours_per_unit' => 5.0,  'max' => 6000],
+	'ilt' => [
+		'label' => 'Instructor-led', 'unit' => 'hours', 'dev_hours_per_unit' => 40.0, 'max' => 1000,
+		'description' => 'In-person training with a facilitator guide, participant materials, and slides.',
+	],
+	'vilt' => [
+		'label' => 'Virtual instructor-led', 'unit' => 'hours', 'dev_hours_per_unit' => 40.0, 'max' => 1000,
+		'description' => 'Live online training designed for virtual delivery.',
+	],
+	'elearning-read' => [
+		'label' => 'E-learning, read', 'unit' => 'hours', 'dev_hours_per_unit' => 50.0, 'max' => 1000,
+		'description' => 'Mostly text, images, and narration, with a quiz at the end.',
+	],
+	'elearning-interactive' => [
+		'label' => 'E-learning, interactive', 'unit' => 'hours', 'dev_hours_per_unit' => 80.0, 'max' => 1000,
+		'description' => 'Regular activities such as drag and drop, knowledge checks, and short scenarios.',
+	],
+	'elearning-simulation' => [
+		'label' => 'E-learning, simulation', 'unit' => 'hours', 'dev_hours_per_unit' => 200.0, 'max' => 1000,
+		'description' => 'Software simulations, branching scenarios, or games built around realistic practice.',
+	],
+	'video-recorded' => [
+		'label' => 'Video, recorded', 'unit' => 'minutes', 'dev_hours_per_unit' => 1.0, 'max' => 6000,
+		'description' => 'Webinar recordings and screen captures with light editing.',
+	],
+	'video-produced' => [
+		'label' => 'Video, produced', 'unit' => 'minutes', 'dev_hours_per_unit' => 5.0, 'max' => 6000,
+		'description' => 'Scripted, filmed, and edited video.',
+	],
 ];
+
+// Content types from earlier versions, and the type each now maps to.
+const TYPE_ALIASES = [
+	'self'  => 'elearning-interactive',
+	'video' => 'video-produced',
+];
+
+// Reduction in development time for a course marked as AI assisted. This is a
+// planning estimate that allows for the extra review AI-generated content needs.
+const AI_SAVING = 0.2;
 
 // Words for each unit, for labels and messages.
 const UNITS = [
@@ -144,23 +181,6 @@ function parse_duration(string $raw, ?array $type): float|string
 	return $value;
 }
 
-/** Plain sentence saying which units the durations are entered in. */
-function duration_units_sentence(): string
-{
-	$byUnit = [];
-	foreach (CONTENT_TYPES as $type) {
-		$byUnit[UNITS[$type['unit']]['plural']][] = strtolower($type['label']);
-	}
-	if (count($byUnit) === 1) {
-		return 'Durations are in ' . array_key_first($byUnit) . '.';
-	}
-	$parts = [];
-	foreach ($byUnit as $unit => $labels) {
-		$parts[] = ucfirst(join_list($labels)) . ' durations are in ' . $unit . '.';
-	}
-	return implode(' ', $parts);
-}
-
 // -----------------------------------------------------------------------------
 // Calculation
 // -----------------------------------------------------------------------------
@@ -178,6 +198,8 @@ function calculate(array $rows): array
 		// "hours" is the field name used before durations could be in minutes
 		$durationRaw = as_text($row['duration'] ?? $row['hours'] ?? '');
 		$type = as_text($row['type'] ?? '');
+		$type = TYPE_ALIASES[$type] ?? $type;
+		$aiAssisted = in_array(as_text($row['ai'] ?? ''), ['1', 'true'], true);
 		$effort = as_text($row['effort'] ?? '');
 
 		if ($name === '' && $durationRaw === '' && $type === '' && $effort === '') {
@@ -227,6 +249,9 @@ function calculate(array $rows): array
 		}
 
 		$devHours = $duration * $typeSettings['dev_hours_per_unit'] * EFFORT_LEVELS[$effort]['factor'];
+		if ($aiAssisted) {
+			$devHours *= 1 - AI_SAVING;
+		}
 		$totalDevHours += $devHours;
 		$counted++;
 		$results[] = [
@@ -310,7 +335,7 @@ function legacy_rows(): array
 	if (!is_array($data) || !isset($data['rows']) || !is_array($data['rows'])) {
 		return [];
 	}
-	$types = ['1' => 'ilt', '2' => 'self'];
+	$types = ['1' => 'ilt', '2' => 'elearning-interactive'];
 	$efforts = ['0.25' => 'minor', '0.5' => 'half', '0.75' => 'major', '1' => 'new'];
 	$rows = [];
 	foreach (array_slice($data['rows'], 0, MAX_ROWS) as $row) {
@@ -322,6 +347,7 @@ function legacy_rows(): array
 			'duration' => text_cut(as_text($row['duration_hours'] ?? ''), 20),
 			'type'     => $types[as_text($row['content_type'] ?? '')] ?? '',
 			'effort'   => $efforts[as_text($row['level_of_effort'] ?? '')] ?? '',
+			'ai'       => false,
 		];
 	}
 	return $rows;
@@ -365,7 +391,7 @@ function legacy_rows(): array
 			<div class="courses">
 				<table>
 					<colgroup>
-						<col class="c-name"><col class="c-type"><col class="c-duration"><col class="c-effort"><col class="c-weeks"><col class="c-remove">
+						<col class="c-name"><col class="c-type"><col class="c-duration"><col class="c-effort"><col class="c-ai"><col class="c-weeks"><col class="c-remove">
 					</colgroup>
 					<thead>
 					<tr>
@@ -373,6 +399,7 @@ function legacy_rows(): array
 						<th scope="col" class="col-type">Content type</th>
 						<th scope="col" class="col-duration">Duration</th>
 						<th scope="col" class="col-effort">Level of effort</th>
+						<th scope="col" class="col-ai">AI assisted</th>
 						<th scope="col" class="col-weeks num" id="unit-heading">Weeks</th>
 						<th scope="col" class="col-remove"><span class="sr-only">Remove</span></th>
 					</tr>
@@ -420,10 +447,21 @@ function legacy_rows(): array
 		<section class="method" aria-labelledby="method-heading">
 			<h2 id="method-heading">How the estimate works</h2>
 			<p class="formula">Work hours = duration × development hours for the content type × level of effort</p>
+			<p class="formula">AI-assisted courses = work hours less <?= (int)round(AI_SAVING * 100) ?>%</p>
 			<p class="formula">Weeks of work = work hours ÷ <?= HOURS_PER_WEEK ?> development hours a week</p>
 			<p class="formula">Headcount = weeks of work ÷ <?= WORKING_WEEKS_PER_YEAR ?> working weeks a year</p>
-			<p><?= h(duration_units_sentence()) ?></p>
-			<p>The figures are a planning guide, not a quote. A week of work is <?= HOURS_PER_WEEK ?> hours of development, which allows for the meetings, reviews, and admin in a normal working week. The <?= WORKING_WEEKS_PER_YEAR ?> working weeks a year allow for holidays and leave. To show a backlog, compare the work hours with the time your team actually has free for development.</p>
+			<p>The figures are a planning guide, not a quote. The development hours for each content type are based on published industry figures for new content. The <?= (int)round(AI_SAVING * 100) ?>% AI saving is a planning estimate, not a measured figure, and allows for the extra review AI-generated content needs.</p>
+			<p>A week of work is <?= HOURS_PER_WEEK ?> hours of development, which allows for the meetings, reviews, and admin in a normal working week. The <?= WORKING_WEEKS_PER_YEAR ?> working weeks a year allow for holidays and leave. To show a backlog, compare the work hours with the time your team actually has free for development.</p>
+			<h2 id="types-heading">Content types</h2>
+			<p>Durations are in hours, apart from video, which is in minutes.</p>
+			<dl class="types">
+				<?php foreach (CONTENT_TYPES as $item): ?>
+				<div>
+					<dt><?= h($item['label']) ?></dt>
+					<dd><?= h($item['description']) ?></dd>
+				</div>
+				<?php endforeach; ?>
+			</dl>
 			<p>For background on development ratios, <a href="https://www.td.org/content/atd-blog/how-long-does-it-take-to-develop-training-new-question-new-answers">read the ATD article on how long training takes to develop</a>.</p>
 		</section>
 	</div>
@@ -472,6 +510,12 @@ function legacy_rows(): array
 			</select>
 			<p class="field-error" data-error="effort"></p>
 		</td>
+		<td class="col-ai">
+			<label class="ai-toggle" data-for="ai">
+				<input type="checkbox" data-field="ai">
+				<span class="ai-text">AI assisted<span class="sr-only row-ref"></span></span>
+			</label>
+		</td>
 		<td class="col-weeks">
 			<span class="cell-label unit-label" aria-hidden="true">Weeks</span>
 			<div class="weeks" aria-live="off">
@@ -489,6 +533,7 @@ function legacy_rows(): array
 	'maxRows'      => MAX_ROWS,
 	'legacyCookie' => LEGACY_COOKIE,
 	'legacyRows'   => legacy_rows(),
+	'typeAliases'  => TYPE_ALIASES,
 ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
 <script src="<?= h(asset('calculator.js')) ?>" defer></script>
 </body>

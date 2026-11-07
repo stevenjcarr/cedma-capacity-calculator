@@ -14,6 +14,8 @@
 	var FIELDS = ['name', 'type', 'duration', 'effort'];
 	var LEGACY_COOKIE = config.legacyCookie || 'ctc_items_v3';
 	var LEGACY_ROWS = Array.isArray(config.legacyRows) ? config.legacyRows : [];
+	// Content types renamed since earlier versions, so saved lists still load
+	var TYPE_ALIASES = config.typeAliases || {};
 
 	var rowsEl = document.getElementById('rows');
 	var template = document.getElementById('row-template');
@@ -40,12 +42,14 @@
 		data = data || {};
 		// Lists saved before video was added call the duration "hours"
 		if (data.duration == null && data.hours != null) data.duration = data.hours;
+		if (data.type && TYPE_ALIASES[data.type]) data.type = TYPE_ALIASES[data.type];
 		FIELDS.forEach(function (f) {
 			var el = tr.querySelector('[data-field="' + f + '"]');
 			var value = data[f] == null ? '' : String(data[f]);
 			if (el.tagName === 'SELECT' && !el.querySelector('option[value="' + CSS.escape(value) + '"]')) value = '';
 			el.value = value;
 		});
+		tr.querySelector('[data-field="ai"]').checked = data.ai === true || data.ai === '1';
 		tr.querySelector('.unit-label').textContent = view === 'hours' ? 'Hours' : 'Weeks';
 		updateDurationUnit(tr);
 		rowsEl.appendChild(tr);
@@ -74,6 +78,7 @@
 			});
 			tr.querySelectorAll('.row-ref').forEach(function (s) { s.textContent = ', course ' + n; });
 			tr.querySelector('[data-action="remove"]').setAttribute('aria-label', 'Remove course ' + n);
+			tr.querySelector('[data-field="ai"]').id = 'ai-' + n;
 		});
 		var full = rowsEl.rows.length >= MAX_ROWS;
 		addBtn.disabled = full;
@@ -86,6 +91,7 @@
 			FIELDS.forEach(function (f) {
 				row[f] = tr.querySelector('[data-field="' + f + '"]').value.trim();
 			});
+			row.ai = tr.querySelector('[data-field="ai"]').checked;
 			return row;
 		});
 	}
@@ -211,6 +217,7 @@
 			(next ? next.querySelector('[data-action="remove"]') : addBtn).focus();
 		} else {
 			FIELDS.forEach(function (f) { tr.querySelector('[data-field="' + f + '"]').value = ''; });
+			tr.querySelector('[data-field="ai"]').checked = false;
 			updateDurationUnit(tr);
 			tr.querySelector('[data-field="name"]').focus();
 		}

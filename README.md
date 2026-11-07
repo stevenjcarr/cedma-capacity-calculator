@@ -7,7 +7,7 @@ A small web app that estimates how much development work a list of courses needs
 
 Each person's choice of view is remembered in their browser.
 
-People enter each course with its content type, its duration, and the level of effort. Durations are in hours, apart from video, which is in minutes. The page sends the list to `index.php`, which does the calculation and returns the results. The multipliers stay on the server and are never sent to the browser, although the page explains the formula.
+People enter each course with its content type, its duration, the level of effort, and whether it is AI assisted. Durations are in hours, apart from video, which is in minutes. The content types are instructor-led, virtual instructor-led, three levels of e-learning (read, interactive, and simulation), and two kinds of video (recorded and produced). The page sends the list to `index.php`, which does the calculation and returns the results. The multipliers stay on the server and are never sent to the browser, although the page explains the formula.
 
 ## Files
 
@@ -30,12 +30,25 @@ Upload `index.php` and the `assets` folder to the same directory on the web serv
 
 The settings are at the top of `index.php`:
 
-- `CONTENT_TYPES` lists the content types. Each one has the unit its duration is entered in (`hours` or `minutes`), the hours of development per unit of finished content (`dev_hours_per_unit`), and the longest duration accepted (`max`). Instructor-led is 40 development hours per hour, self-paced is 80 per hour, and video is five per minute.
+- `CONTENT_TYPES` lists the content types. Each one has the unit its duration is entered in (`hours` or `minutes`), the hours of development per unit of finished new content (`dev_hours_per_unit`), the longest duration accepted (`max`), and a description shown on the page. The figures are based on published industry figures:
+
+  | Content type | Development hours |
+  | --- | --- |
+  | Instructor-led | 40 per hour |
+  | Virtual instructor-led | 40 per hour |
+  | E-learning, read | 50 per hour |
+  | E-learning, interactive | 80 per hour |
+  | E-learning, simulation | 200 per hour |
+  | Video, recorded | 1 per minute |
+  | Video, produced | 5 per minute |
+
+- `TYPE_ALIASES` maps content types from earlier versions to their new names, so saved lists still load. Self-paced became E-learning, interactive, and Video became Video, produced, at the same figures.
+- `AI_SAVING` is the reduction for a course marked as AI assisted, currently 20%. It is a planning estimate that allows for the extra review AI-generated content needs.
 - `EFFORT_LEVELS` sets the share of the content being created or reworked for each level of effort.
 - `HOURS_PER_WEEK` sets the hours of development in a working week, currently 32. That is less than a full 40-hour week, to allow for meetings, reviews, and admin, so the headcount reflects the time developers actually spend developing. Development hours are divided by this to give weeks of work.
 - `WORKING_WEEKS_PER_YEAR` sets the working year used for the headcount, currently 45, which allows for holidays and leave.
 
-The calculation is: work hours = duration × development hours per unit × level of effort; weeks = work hours ÷ `HOURS_PER_WEEK`; headcount = weeks ÷ `WORKING_WEEKS_PER_YEAR`.
+The calculation is: work hours = duration × development hours per unit × level of effort, less `AI_SAVING` for AI-assisted courses; weeks = work hours ÷ `HOURS_PER_WEEK`; headcount = weeks ÷ `WORKING_WEEKS_PER_YEAR`.
 
 To add another content type, add a line to `CONTENT_TYPES`. A new unit also needs an entry in `UNITS`.
 
