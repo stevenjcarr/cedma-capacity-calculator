@@ -37,9 +37,11 @@ const EFFORT_LEVELS = [
 
 const WORKING_WEEKS_PER_YEAR = 45;
 
-// Working hours in one week of development. Development hours are divided by
-// this to give weeks of work, which the headcount is based on.
-const HOURS_PER_WEEK = 40;
+// Hours of development in one working week. This is less than a full 40-hour
+// week, to allow for the meetings, reviews, and admin every developer has.
+// Development hours are divided by this to give weeks of work, which the
+// headcount is based on. Holidays and leave are covered by WORKING_WEEKS_PER_YEAR.
+const HOURS_PER_WEEK = 32;
 
 // Limits
 const MAX_ROWS = 200;
@@ -418,10 +420,10 @@ function legacy_rows(): array
 		<section class="method" aria-labelledby="method-heading">
 			<h2 id="method-heading">How the estimate works</h2>
 			<p class="formula">Work hours = duration × development hours for the content type × level of effort</p>
-			<p class="formula">Weeks of work = work hours ÷ <?= HOURS_PER_WEEK ?> hours a week</p>
+			<p class="formula">Weeks of work = work hours ÷ <?= HOURS_PER_WEEK ?> development hours a week</p>
 			<p class="formula">Headcount = weeks of work ÷ <?= WORKING_WEEKS_PER_YEAR ?> working weeks a year</p>
 			<p><?= h(duration_units_sentence()) ?></p>
-			<p>The figures are a planning guide, not a quote. Compare the work hours with the time your team actually has free for development. The headcount assumes each developer spends their whole working year on development, so allow for reviews, meetings, and time off when you use it.</p>
+			<p>The figures are a planning guide, not a quote. A week of work is <?= HOURS_PER_WEEK ?> hours of development, which allows for the meetings, reviews, and admin in a normal working week. The <?= WORKING_WEEKS_PER_YEAR ?> working weeks a year allow for holidays and leave. To show a backlog, compare the work hours with the time your team actually has free for development.</p>
 			<p>For background on development ratios, <a href="https://www.td.org/content/atd-blog/how-long-does-it-take-to-develop-training-new-question-new-answers">read the ATD article on how long training takes to develop</a>.</p>
 		</section>
 	</div>

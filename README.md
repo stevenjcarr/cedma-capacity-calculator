@@ -32,8 +32,8 @@ The settings are at the top of `index.php`:
 
 - `CONTENT_TYPES` lists the content types. Each one has the unit its duration is entered in (`hours` or `minutes`), the hours of development per unit of finished content (`dev_hours_per_unit`), and the longest duration accepted (`max`). Instructor-led is 40 development hours per hour, self-paced is 80 per hour, and video is five per minute.
 - `EFFORT_LEVELS` sets the share of the content being created or reworked for each level of effort.
-- `HOURS_PER_WEEK` sets the hours in a week of development. Development hours are divided by this to give weeks of work.
-- `WORKING_WEEKS_PER_YEAR` sets the working year used for the headcount.
+- `HOURS_PER_WEEK` sets the hours of development in a working week, currently 32. That is less than a full 40-hour week, to allow for meetings, reviews, and admin, so the headcount reflects the time developers actually spend developing. Development hours are divided by this to give weeks of work.
+- `WORKING_WEEKS_PER_YEAR` sets the working year used for the headcount, currently 45, which allows for holidays and leave.
 
 The calculation is: work hours = duration × development hours per unit × level of effort; weeks = work hours ÷ `HOURS_PER_WEEK`; headcount = weeks ÷ `WORKING_WEEKS_PER_YEAR`.
 
