@@ -1,6 +1,11 @@
 # CEdMA Enterprise capacity calculator
 
-A small web app that estimates how many weeks of development work a list of courses needs, and how many developers that represents over a year.
+A small web app that estimates how much development work a list of courses needs. The estimate can be shown two ways:
+
+- **Headcount** gives the weeks of work and the number of developers needed for a year, for making the case that building X will take Y people.
+- **Work hours** gives the total hours of work and the weeks, for showing a backlog against the time a team actually has free.
+
+Each person's choice of view is remembered in their browser.
 
 People enter each course with its duration in hours, its content type, and the level of effort. The page sends the list to `index.php`, which does the calculation and returns the results. The multipliers stay on the server and are never sent to the browser, although the page explains the formula.
 
@@ -28,8 +33,9 @@ The settings are at the top of `index.php`:
 - `CONTENT_TYPES` sets the weeks of development per hour of finished content for each content type.
 - `EFFORT_LEVELS` sets the share of the content being created or reworked for each level of effort.
 - `WORKING_WEEKS_PER_YEAR` sets the working year used for the headcount.
+- `HOURS_PER_WEEK` sets the hours in a week of development, used for the work hours view.
 
-The labels in the dropdowns come from the same settings, so a change there updates the page as well. If you change the working year, the explanation on the page updates with it.
+The labels in the dropdowns come from the same settings, so a change there updates the page as well. If you change the working year or the hours in a week, the explanation on the page updates with it.
 
 ## Saved data
 

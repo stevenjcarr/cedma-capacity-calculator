@@ -23,6 +23,13 @@
 	var weeksEl = document.getElementById('total-weeks');
 	var headcountEl = document.getElementById('headcount');
 	var summaryEl = document.getElementById('summary');
+	var hoursEl = document.getElementById('total-hours');
+	var resultsEl = document.getElementById('results');
+	var unitHeading = document.getElementById('unit-heading');
+	var viewInputs = document.querySelectorAll('input[name="view"]');
+	var VIEW_KEY = 'cedma-capacity-calculator-view';
+	var view = 'headcount';
+	var lastData = null;
 	var endpoint = window.location.pathname + window.location.search;
 
 	// ---------- Rows ----------
@@ -37,6 +44,7 @@
 			if (el.tagName === 'SELECT' && !el.querySelector('option[value="' + CSS.escape(value) + '"]')) value = '';
 			el.value = value;
 		});
+		tr.querySelector('.unit-label').textContent = view === 'hours' ? 'Hours' : 'Weeks';
 		rowsEl.appendChild(tr);
 		return tr;
 	}
@@ -143,15 +151,17 @@
 	}
 
 	function showResults(data) {
+		lastData = data;
 		weeksEl.textContent = data.total_weeks;
 		headcountEl.textContent = data.headcount;
+		hoursEl.textContent = data.total_hours;
 		summaryEl.textContent = data.summary;
 		summaryEl.classList.toggle('has-incomplete', data.incomplete > 0);
 
 		Array.prototype.forEach.call(rowsEl.rows, function (tr, i) {
 			var result = data.rows[i] || { status: 'empty' };
 			var invalid = result.invalid || {};
-			tr.querySelector('.weeks-value').textContent = result.status === 'ok' ? result.weeks : '';
+			tr.querySelector('.weeks-value').textContent = result.status === 'ok' ? (view === 'hours' ? result.hours : result.weeks) : '';
 			tr.querySelector('.weeks-note').textContent = result.status === 'incomplete' ? 'Not counted' : '';
 			tr.querySelector('.row-note').textContent = result.status === 'incomplete' ? (result.note || '') : '';
 
@@ -211,10 +221,32 @@
 		runCalc();
 	});
 
+	// ---------- Headcount or work hours view ----------
+
+	function setView(next, remember) {
+		view = next === 'hours' ? 'hours' : 'headcount';
+		resultsEl.setAttribute('data-view', view);
+		viewInputs.forEach(function (input) { input.checked = input.value === view; });
+		var unit = view === 'hours' ? 'Hours' : 'Weeks';
+		unitHeading.textContent = unit;
+		rowsEl.querySelectorAll('.unit-label').forEach(function (el) { el.textContent = unit; });
+		if (lastData) showResults(lastData);
+		if (remember) {
+			try { localStorage.setItem(VIEW_KEY, view); } catch (e) { /* ignore */ }
+		}
+	}
+
+	viewInputs.forEach(function (input) {
+		input.addEventListener('change', function () { setView(input.value, true); });
+	});
+
 	// ---------- Start ----------
 
 	loadSaved().slice(0, MAX_ROWS).forEach(addRow);
 	if (!rowsEl.rows.length) addRow();
+	var savedView = null;
+	try { savedView = localStorage.getItem(VIEW_KEY); } catch (e) { /* ignore */ }
+	setView(savedView, false);
 	renumber();
 	save();
 	runCalc();

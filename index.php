@@ -28,6 +28,9 @@ const EFFORT_LEVELS = [
 
 const WORKING_WEEKS_PER_YEAR = 45;
 
+// Working hours in one week of development, for the work hours view.
+const HOURS_PER_WEEK = 40;
+
 // Limits
 const MAX_ROWS = 200;
 const MAX_HOURS = 1000;
@@ -192,7 +195,11 @@ function calculate(array $rows): array
 		$weeks = $hours * CONTENT_TYPES[$type]['weeks_per_hour'] * EFFORT_LEVELS[$effort]['factor'];
 		$totalWeeks += $weeks;
 		$counted++;
-		$results[] = ['status' => 'ok', 'weeks' => format_number($weeks)];
+		$results[] = [
+			'status' => 'ok',
+			'weeks'  => format_number($weeks),
+			'hours'  => format_number($weeks * HOURS_PER_WEEK, 1),
+		];
 	}
 
 	$headcount = $totalWeeks / WORKING_WEEKS_PER_YEAR;
@@ -211,6 +218,7 @@ function calculate(array $rows): array
 		'ok'          => true,
 		'rows'        => $results,
 		'total_weeks' => format_number($totalWeeks),
+		'total_hours' => format_number($totalWeeks * HOURS_PER_WEEK, 1),
 		'headcount'   => number_format($headcount, 1, '.', ','),
 		'counted'     => $counted,
 		'incomplete'  => $incomplete,
@@ -310,7 +318,7 @@ function legacy_rows(): array
 		<div class="page-head">
 			<p class="label">Planning tool</p>
 			<h1>Capacity <em>calculator</em></h1>
-			<p class="lead">Estimate how many weeks of development work your course plans need, and how many developers that represents over a year.</p>
+			<p class="lead">Estimate how much development work your course plans need, either as work hours or as the number of developers it would take over a year.</p>
 		</div>
 
 		<noscript>
@@ -330,7 +338,7 @@ function legacy_rows(): array
 						<th scope="col" class="col-hours">Duration (hours)</th>
 						<th scope="col" class="col-type">Content type</th>
 						<th scope="col" class="col-effort">Level of effort</th>
-						<th scope="col" class="col-weeks num">Weeks</th>
+						<th scope="col" class="col-weeks num" id="unit-heading">Weeks</th>
 						<th scope="col" class="col-remove"><span class="sr-only">Remove</span></th>
 					</tr>
 					</thead>
@@ -345,16 +353,27 @@ function legacy_rows(): array
 			</div>
 		</section>
 
-		<section class="results" aria-labelledby="results-heading">
+		<section class="results" id="results" data-view="headcount" aria-labelledby="results-heading">
 			<img class="emblem" src="<?= h(asset('cedma-logomark-rgb-dark.svg')) ?>" alt="">
 			<div class="results-content">
-				<h2 id="results-heading" class="label">Your estimate</h2>
+				<div class="results-head">
+					<h2 id="results-heading" class="label">Your estimate</h2>
+					<fieldset class="view-switch">
+						<legend class="switch-label">Show as</legend>
+						<label><input type="radio" name="view" value="headcount" checked><span>Headcount</span></label>
+						<label><input type="radio" name="view" value="hours"><span>Work hours</span></label>
+					</fieldset>
+				</div>
 				<dl class="stats">
-					<div class="stat">
+					<div class="stat stat-hours">
+						<dt>Total hours of work</dt>
+						<dd id="total-hours">0</dd>
+					</div>
+					<div class="stat stat-weeks">
 						<dt>Total weeks of work</dt>
 						<dd id="total-weeks">0</dd>
 					</div>
-					<div class="stat">
+					<div class="stat stat-headcount">
 						<dt>Estimated developer headcount</dt>
 						<dd id="headcount">0.0</dd>
 					</div>
@@ -366,8 +385,9 @@ function legacy_rows(): array
 		<section class="method" aria-labelledby="method-heading">
 			<h2 id="method-heading">How the estimate works</h2>
 			<p class="formula">Weeks of work = duration × content type × level of effort</p>
+			<p class="formula">Work hours = total weeks × <?= HOURS_PER_WEEK ?> hours a week</p>
 			<p class="formula">Headcount = total weeks ÷ <?= WORKING_WEEKS_PER_YEAR ?> working weeks a year</p>
-			<p>The figures are a planning guide, not a quote. They assume each developer spends their working year on development, so allow for reviews, meetings, and time off when you use them.</p>
+			<p>The figures are a planning guide, not a quote. Compare the work hours with the time your team actually has free for development. The headcount assumes each developer spends their whole working year on development, so allow for reviews, meetings, and time off when you use it.</p>
 			<p>For background on development ratios, <a href="https://www.td.org/content/atd-blog/how-long-does-it-take-to-develop-training-new-question-new-answers">read the ATD article on how long training takes to develop</a>.</p>
 		</section>
 	</div>
@@ -414,7 +434,7 @@ function legacy_rows(): array
 			<p class="field-error" data-error="effort"></p>
 		</td>
 		<td class="col-weeks">
-			<span class="cell-label" aria-hidden="true">Weeks</span>
+			<span class="cell-label unit-label" aria-hidden="true">Weeks</span>
 			<div class="weeks" aria-live="off">
 				<span class="weeks-value"></span>
 				<span class="weeks-note"></span>
