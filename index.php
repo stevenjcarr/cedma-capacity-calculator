@@ -90,7 +90,7 @@ const EFFORT_LEVELS = [
 const WORKING_WEEKS_PER_YEAR = 45;
 
 // Hours of development in one working week. This is less than a full 40-hour
-// week, to allow for the meetings, reviews, and admin every developer has.
+// week, to allow for the regular meetings and admin every developer has.
 // Development hours are divided by this to give weeks of work, which the
 // headcount is based on. Holidays and leave are covered by WORKING_WEEKS_PER_YEAR.
 const HOURS_PER_WEEK = 32;
@@ -589,7 +589,7 @@ function legacy_rows(): array
 			<p class="formula">Weeks of work = work hours ÷ <?= HOURS_PER_WEEK ?> development hours a week</p>
 			<p class="formula">Headcount = weeks of work ÷ <?= WORKING_WEEKS_PER_YEAR ?> working weeks a year</p>
 			<p>The figures are a planning guide, not a quote. The development hours for each content type are based on published industry figures for new content. The AI savings are planning estimates, not measured figures, and allow for the extra review AI-generated content needs.</p>
-			<p>A week of work is <?= HOURS_PER_WEEK ?> hours of development, which allows for the meetings, reviews, and admin in a normal working week. The <?= WORKING_WEEKS_PER_YEAR ?> working weeks a year allow for holidays and leave. To show a backlog, compare the work hours with the time your team actually has free for development.</p>
+			<p>A week of work is <?= HOURS_PER_WEEK ?> hours of development, which allows for the regular meetings and admin in a normal working week. The <?= WORKING_WEEKS_PER_YEAR ?> working weeks a year allow for holidays and leave. To show a backlog, compare the work hours with the time your team actually has free for development.</p>
 			<h2 id="types-heading">Content types</h2>
 			<p>What each content type covers, and what the AI assisted option means for it.</p>
 			<div class="types-wrap">

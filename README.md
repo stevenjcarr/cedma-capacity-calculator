@@ -48,7 +48,7 @@ The settings are at the top of `index.php`:
 
 - `TYPE_ALIASES` maps content types from earlier versions to their new names, so saved lists still load. Self-paced became E-learning, interactive, and Video became Video, produced, at the same figures.
 - `EFFORT_LEVELS` sets the share of the content being created or reworked for each level of effort.
-- `HOURS_PER_WEEK` sets the hours of development in a working week, currently 32. That is less than a full 40-hour week, to allow for meetings, reviews, and admin, so the headcount reflects the time developers actually spend developing. Development hours are divided by this to give weeks of work.
+- `HOURS_PER_WEEK` sets the hours of development in a working week, currently 32. That is less than a full 40-hour week, to allow for regular meetings and admin, so the headcount reflects the time developers actually spend developing. Development hours are divided by this to give weeks of work.
 - `WORKING_WEEKS_PER_YEAR` sets the working year used for the headcount, currently 45, which allows for holidays and leave.
 
 The calculation is: work hours = duration × development hours per unit × level of effort, less the type's `ai_saving` for AI-assisted items; weeks = work hours ÷ `HOURS_PER_WEEK`; headcount = weeks ÷ `WORKING_WEEKS_PER_YEAR`.
