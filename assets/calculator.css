@@ -539,12 +539,91 @@ select {
 
 /* Method note */
 .method > p { max-width: 70ch; }
-.method p { margin: 0 0 12px; }
-.formula {
-	font-family: var(--font-mono);
-	font-size: 15px;
-	color: var(--deep-slate);
+
+/* How the estimate works: text on the left, the calculation in a card */
+.method-grid {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(320px, 460px);
+	gap: 32px 56px;
+	align-items: start;
+	margin-bottom: 8px;
 }
+.method-text p { margin: 0 0 14px; max-width: 62ch; }
+.calc-card {
+	background: var(--warm-grey);
+	border-radius: 8px;
+	padding: 28px 32px 30px;
+}
+.calc-card .label { margin: 0 0 18px; }
+.calc-steps {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	counter-reset: step;
+}
+.calc-steps li {
+	counter-increment: step;
+	position: relative;
+	padding: 0 0 0 40px;
+	margin: 0 0 18px;
+}
+.calc-steps li:last-child { margin-bottom: 0; }
+.calc-steps li::before {
+	content: counter(step);
+	position: absolute;
+	left: 0;
+	top: 1px;
+	width: 26px;
+	height: 26px;
+	border-radius: 50%;
+	background: var(--deep-slate);
+	color: var(--warm-white);
+	font-family: var(--font-mono);
+	font-size: 13px;
+	line-height: 26px;
+	text-align: center;
+}
+.calc-term {
+	display: block;
+	font-weight: 600;
+	color: var(--deep-slate);
+	line-height: 1.4;
+}
+.calc-formula {
+	display: block;
+	margin-top: 2px;
+	font-family: var(--font-mono);
+	font-size: 14px;
+	line-height: 1.5;
+	color: var(--slate-mid);
+}
+@media (max-width: 900px) {
+	.method-grid { grid-template-columns: 1fr; }
+	.calc-card { padding: 24px 22px 26px; }
+}
+
+/* Footer links */
+.footer-links {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px 24px;
+}
+
+/* Sources page */
+.back-link {
+	margin: 32px 0 0;
+	font-size: 15px;
+}
+.back-link a {
+	color: var(--signal-blue);
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+.back-link a::before { content: "\2190\00a0"; }
+.back-link + .page-head { padding-top: 24px; }
+
+.method p { margin: 0 0 12px; }
+.method .method-text p { margin: 0 0 14px; }
 .method h2:not(:first-child) { margin-top: 40px; }
 
 /* Content types table */
@@ -573,12 +652,15 @@ select {
 .types-table td.na { font-family: var(--font-body); font-size: 15px; color: var(--text-muted); white-space: normal; }
 @media (min-width: 901px) {
 	.types-table { table-layout: fixed; }
-	.types-table th:nth-child(1) { width: 190px; }
-	.types-table th:nth-child(2) { width: 108px; }
-	.types-table th:nth-child(4) { width: 22%; }
-	.types-table th:nth-child(6) { width: 112px; }
+	.types-table th:nth-child(1) { width: 210px; }
+	.types-table th:nth-child(2) { width: 112px; }
+	.types-table th:nth-child(5) { width: 120px; }
 }
-.types-table tbody td:nth-child(2) { white-space: nowrap; }
+.types-table:not(.basis-table) tbody td:nth-child(2) { white-space: nowrap; }
+@media (min-width: 901px) {
+	.types-table.basis-table th:nth-child(1) { width: 30%; }
+	.types-table.basis-table th:nth-child(2) { width: auto; }
+}
 
 @media (max-width: 900px) {
 	.types-wrap { border: 0; border-radius: 0; overflow: visible; }

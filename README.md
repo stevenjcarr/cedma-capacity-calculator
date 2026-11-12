@@ -13,7 +13,11 @@ People enter each item with its content type, its duration, the level of effort,
 
 | File | Purpose |
 | --- | --- |
-| `index.php` | The page, and the calculation endpoint it posts to |
+| `index.php` | The calculator page, and the calculation endpoint it posts to |
+| `sources.php` | Where the figures come from: what each content type is based on, and the sources |
+| `includes/calculator.php` | The settings (content types, ratios, AI savings), the calculation, and the CSV export, shared by both pages. Never sent to the browser |
+| `includes/layout.php` | The page head, site header, and footer shared by both pages |
+| `includes/.htaccess` | Stops the include files being requested directly on Apache servers. The files also refuse direct requests themselves |
 | `assets/calculator.css` | Styles, following the CEdMA Enterprise Brand Guidelines v2.2 |
 | `assets/calculator.js` | Table editing, saving in the browser, and calls to `index.php` |
 | `assets/fonts.css` and `assets/fonts/` | The brand fonts (Cormorant Garamond, Albert Sans, and DM Mono) in the weights the page uses, with their SIL Open Font License files |
@@ -25,13 +29,13 @@ PHP 8.0 or later, with the standard JSON and PCRE support. It has been tested on
 
 ## Deploying
 
-Upload `index.php` and the `assets` folder to the same directory on the web server. Everything the page needs is in that folder, including the brand fonts, so nothing loads from another site.
+Upload `index.php`, `sources.php`, and the `includes` and `assets` folders to the same directory on the web server. Everything the pages need is in those files, including the brand fonts, so nothing loads from another site.
 
 ## Changing the figures
 
-The settings are at the top of `index.php`:
+The settings are at the top of `includes/calculator.php`:
 
-- `CONTENT_TYPES` lists the content types. Each one has the unit its duration is entered in (`hours` or `minutes`), the hours of development per unit of finished new content (`dev_hours_per_unit`), the longest duration accepted (`max`), a description shown on the page, and the `basis` the figure rests on. The page shows the basis and the sources but never the figures themselves:
+- `CONTENT_TYPES` lists the content types. Each one has the unit its duration is entered in (`hours` or `minutes`), the hours of development per unit of finished new content (`dev_hours_per_unit`), the longest duration accepted (`max`), a description shown on the page, and the `basis` the figure rests on. The sources page shows the basis and the sources, but neither page ever shows the figures themselves:
 
   | Content type | Development hours | AI saving | Based on |
   | --- | --- | --- | --- |
@@ -44,7 +48,7 @@ The settings are at the top of `index.php`:
   | Video, produced | 5 per minute | 10% | ATD Blog, November 2015 ("about four to five hours" per finished minute) |
   | Video, AI avatar | 3 per minute | Does not apply | CEdMA estimate. No independent published figures |
 
-  The full source list is at the bottom of the page. The AI savings are CEdMA planning estimates; LearningSim 2024 (20 to 35% for e-learning, and design time "about the same" for instructor-led) was used as a guide.
+  The full source list is on the sources page (`sources.php`). The AI savings are CEdMA planning estimates; LearningSim 2024 (20 to 35% for e-learning, and design time "about the same" for instructor-led) was used as a guide.
 
   Each type's `ai_saving` is the reduction when an item is marked AI assisted. These are planning estimates that allow for the extra review AI-generated content needs. Set it to `null` for a type where the option does not apply, and the checkbox is turned off for that type. The `description` and `ai_note` text appear in the content types table at the bottom of the page.
 
