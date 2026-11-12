@@ -52,7 +52,7 @@ header('X-Content-Type-Options: nosniff');
 					</tbody>
 				</table>
 			</div>
-			<p>Most published figures for e-learning predate today's authoring tools, which have made building e-learning much quicker. The bulk of the time now goes on analysis and design rather than the build, which is why CEdMA's e-learning estimates sit below the older published figures. They are still at the low end of published research, so they are more likely to understate the work than overstate it.</p>
+			<p>Most published figures for e-learning predate today's authoring tools, which have made building e-learning much quicker. The bulk of the time now goes on analysis and design rather than the build, which is why CEdMA's e-learning estimates sit below older published figures such as Chapman Alliance (2010) and ATD (2021). ATD's 2023 survey also reported shorter development times than its 2020 survey for every type of training, though it does not say why.</p>
 
 			<h2 id="sources-heading">Sources</h2>
 			<ul class="sources">
@@ -61,6 +61,7 @@ header('X-Content-Type-Options: nosniff');
 				<li><cite>CEdMA Business Metrics Survey</cite>, CEdMA Enterprise, November 2026. Results from CEdMA members. Used for instructor-led and virtual instructor-led training, and as the lower reference for e-learning.</li>
 				<li><a href="https://www.td.org/insights/dont-waste-your-money-when-developing-training-videos"><cite>Don't Waste Your Money When Developing Training Videos</cite></a>, ATD Blog, November 2015. Used for produced video.</li>
 				<li>Robyn A. Defelice, <a href="https://td.org/insights/how-long-does-it-take-to-develop-training-new-question-new-answers"><cite>How Long Does It Take to Develop Training? New Question, New Answers</cite></a>, ATD, January 2021. A survey of 264 respondents, using 2020 data. It reports the hours to develop a typical unit of 17 to 26 minutes, not an hour. Converted to an hour, its figures are well above the calculator's, but the conversion is too uncertain to use them directly, so it is background reading.</li>
+				<li>Robyn A. Defelice, <a href="https://www.td.org/content/td-magazine/want-to-speed-up-training-development-time"><cite>Want to Speed Up Training Development Time?</cite></a>, TD Magazine, ATD, November 2023. A survey of 115 respondents, using early 2023 data. It reports the hours to create each type of training product, but not the module lengths, so its figures cannot be converted to an hour. Background reading.</li>
 			</ul>
 		</section>
 	</div>
