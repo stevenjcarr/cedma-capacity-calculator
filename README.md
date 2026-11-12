@@ -31,18 +31,20 @@ Upload `index.php` and the `assets` folder to the same directory on the web serv
 
 The settings are at the top of `index.php`:
 
-- `CONTENT_TYPES` lists the content types. Each one has the unit its duration is entered in (`hours` or `minutes`), the hours of development per unit of finished new content (`dev_hours_per_unit`), the longest duration accepted (`max`), and a description shown on the page. The figures are based on published industry figures:
+- `CONTENT_TYPES` lists the content types. Each one has the unit its duration is entered in (`hours` or `minutes`), the hours of development per unit of finished new content (`dev_hours_per_unit`), the longest duration accepted (`max`), a description shown on the page, and the `basis` the figure rests on. The page shows the basis and the sources but never the figures themselves:
 
-  | Content type | Development hours | AI saving |
-  | --- | --- | --- |
-  | Instructor-led | 40 per hour | 10% |
-  | Virtual instructor-led | 40 per hour | 10% |
-  | E-learning, read | 50 per hour | 20% |
-  | E-learning, interactive | 80 per hour | 20% |
-  | E-learning, simulation | 200 per hour | 10% |
-  | Video, recorded | 1 per minute | 20% |
-  | Video, produced | 5 per minute | 10% |
-  | Video, AI avatar | 3 per minute | Does not apply |
+  | Content type | Development hours | AI saving | Based on |
+  | --- | --- | --- | --- |
+  | Instructor-led | 40 per hour | 10% | Chapman Alliance 2010 (average 43), LearningSim 2024 (30 to 40), and the CEdMA Business Metrics Survey (median 40) |
+  | Virtual instructor-led | 40 per hour | 10% | CEdMA Business Metrics Survey (median 40). LearningSim 2024 gives 20 to 30 |
+  | E-learning, read | 50 per hour | 20% | CEdMA estimate, between the survey median (35) and Chapman Alliance's Level 1 average (79) |
+  | E-learning, interactive | 80 per hour | 20% | CEdMA estimate, between the survey median (46) and Chapman Alliance's Level 2 average (184) |
+  | E-learning, simulation | 200 per hour | 10% | CEdMA estimate, below Chapman Alliance's Level 3 range (217 to 716). Not surveyed |
+  | Video, recorded | 1 per minute | 20% | CEdMA estimate. No independent published figures |
+  | Video, produced | 5 per minute | 10% | ATD Blog, November 2015 ("about four to five hours" per finished minute) |
+  | Video, AI avatar | 3 per minute | Does not apply | CEdMA estimate. No independent published figures |
+
+  The full source list is at the bottom of the page. The AI savings are CEdMA planning estimates; LearningSim 2024 (20 to 35% for e-learning, and design time "about the same" for instructor-led) was used as a guide.
 
   Each type's `ai_saving` is the reduction when an item is marked AI assisted. These are planning estimates that allow for the extra review AI-generated content needs. Set it to `null` for a type where the option does not apply, and the checkbox is turned off for that type. The `description` and `ai_note` text appear in the content types table at the bottom of the page.
 

@@ -570,12 +570,13 @@ select {
 }
 .types-table .num { text-align: right; white-space: nowrap; }
 .types-table td.num { font-family: var(--font-mono); font-size: 15px; color: var(--deep-slate); }
-.types-table td.na { font-family: var(--font-body); font-size: 15px; color: var(--text-muted); }
+.types-table td.na { font-family: var(--font-body); font-size: 15px; color: var(--text-muted); white-space: normal; }
 @media (min-width: 901px) {
 	.types-table { table-layout: fixed; }
-	.types-table th:nth-child(1) { width: 220px; }
-	.types-table th:nth-child(2) { width: 120px; }
-	.types-table th:nth-child(5) { width: 140px; }
+	.types-table th:nth-child(1) { width: 190px; }
+	.types-table th:nth-child(2) { width: 108px; }
+	.types-table th:nth-child(4) { width: 22%; }
+	.types-table th:nth-child(6) { width: 112px; }
 }
 .types-table tbody td:nth-child(2) { white-space: nowrap; }
 
@@ -610,6 +611,14 @@ select {
 @media (max-width: 600px) {
 	td.col-type, td.col-duration { grid-column: 1 / -1; }
 }
+
+.sources {
+	max-width: 70ch;
+	margin: 0 0 12px;
+	padding-left: 20px;
+}
+.sources li { margin-bottom: 12px; }
+.sources cite { font-style: italic; }
 
 .method a {
 	color: var(--signal-blue);

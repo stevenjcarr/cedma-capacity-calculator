@@ -14,8 +14,9 @@ declare(strict_types=1);
 
 // Each content type has:
 //   unit                the unit its duration is entered in
-//   dev_hours_per_unit  hours of development per unit of finished new content,
-//                       based on published industry figures
+//   dev_hours_per_unit  hours of development per unit of finished new content
+//   basis               what the figure is based on, shown on the page (the
+//                       figures themselves are never shown)
 //   max                 the longest duration accepted
 //   ai_saving           the reduction when an item is marked AI assisted, or
 //                       null where the option does not apply
@@ -27,41 +28,49 @@ const CONTENT_TYPES = [
 	'ilt' => [
 		'label' => 'Instructor-led', 'unit' => 'hours', 'dev_hours_per_unit' => 40.0, 'max' => 1000, 'ai_saving' => 0.1,
 		'description' => 'In-person training with a facilitator guide, participant materials, and slides.',
+		'basis' => 'Published research (Chapman Alliance, LearningSim) and the CEdMA Business Metrics Survey',
 		'ai_note' => 'AI helps draft slides, facilitator guides, and participant materials. Design and subject expert time stay much the same.',
 	],
 	'vilt' => [
 		'label' => 'Virtual instructor-led', 'unit' => 'hours', 'dev_hours_per_unit' => 40.0, 'max' => 1000, 'ai_saving' => 0.1,
 		'description' => 'Live online training designed for virtual delivery.',
+		'basis' => 'CEdMA Business Metrics Survey',
 		'ai_note' => 'AI helps draft slides, facilitator guides, and online activities. Design and subject expert time stay much the same.',
 	],
 	'elearning-read' => [
 		'label' => 'E-learning, read', 'unit' => 'hours', 'dev_hours_per_unit' => 50.0, 'max' => 1000, 'ai_saving' => 0.2,
 		'description' => 'Mostly text, images, and narration, with a quiz at the end.',
+		'basis' => 'CEdMA estimate, between the CEdMA Business Metrics Survey and published research (Chapman Alliance)',
 		'ai_note' => 'AI helps write the text, generate narration, and draft quiz questions, with time added back for review.',
 	],
 	'elearning-interactive' => [
 		'label' => 'E-learning, interactive', 'unit' => 'hours', 'dev_hours_per_unit' => 80.0, 'max' => 1000, 'ai_saving' => 0.2,
 		'description' => 'Regular activities such as drag and drop, knowledge checks, and short scenarios.',
+		'basis' => 'CEdMA estimate, between the CEdMA Business Metrics Survey and published research (Chapman Alliance)',
 		'ai_note' => 'AI helps write the content, narration, and knowledge checks. Designing and building the activities is still mostly manual.',
 	],
 	'elearning-simulation' => [
 		'label' => 'E-learning, simulation', 'unit' => 'hours', 'dev_hours_per_unit' => 200.0, 'max' => 1000, 'ai_saving' => 0.1,
 		'description' => 'Software simulations, branching scenarios, or games built around realistic practice.',
+		'basis' => 'CEdMA estimate, below the published range (Chapman Alliance) for the most advanced simulations',
 		'ai_note' => 'AI helps write scripts and scenarios. Building and testing the simulation is still mostly manual.',
 	],
 	'video-recorded' => [
 		'label' => 'Video, recorded', 'unit' => 'minutes', 'dev_hours_per_unit' => 1.0, 'max' => 6000, 'ai_saving' => 0.2,
 		'description' => 'Webinar recordings and screen captures with light editing.',
+		'basis' => 'CEdMA estimate. No independent published figures',
 		'ai_note' => 'AI helps with editing, captions, and transcripts, and removes pauses and filler words.',
 	],
 	'video-produced' => [
 		'label' => 'Video, produced', 'unit' => 'minutes', 'dev_hours_per_unit' => 5.0, 'max' => 6000, 'ai_saving' => 0.1,
 		'description' => 'Scripted video with human presenters or actors, filmed and edited.',
+		'basis' => 'Practitioner figure (ATD)',
 		'ai_note' => 'AI helps with scripts, storyboards, captions, and rough cuts. Filming and editing are still mostly manual.',
 	],
 	'video-avatar' => [
 		'label' => 'Video, AI avatar', 'unit' => 'minutes', 'dev_hours_per_unit' => 3.0, 'max' => 6000, 'ai_saving' => null,
 		'description' => 'Video presented by an AI avatar with a synthetic voice, made with an AI video tool.',
+		'basis' => 'CEdMA estimate. No independent published figures',
 		'ai_note' => 'Already made with AI, so the AI assisted option does not apply.',
 	],
 ];
@@ -588,10 +597,10 @@ function legacy_rows(): array
 			<p class="formula">AI-assisted items = work hours less the AI saving for the content type</p>
 			<p class="formula">Weeks of work = work hours ÷ <?= HOURS_PER_WEEK ?> development hours a week</p>
 			<p class="formula">Headcount = weeks of work ÷ <?= WORKING_WEEKS_PER_YEAR ?> working weeks a year</p>
-			<p>The figures are a planning guide, not a quote. The development hours for each content type are based on published industry figures for new content. The AI savings are planning estimates, not measured figures, and allow for the extra review AI-generated content needs.</p>
+			<p>The figures are a planning guide, not a quote. The development hours for each content type are for new content. The table below shows what each one is based on, and the sources are listed at the end of the page. Where no reliable published figure exists, CEdMA has set an estimate. The AI savings are CEdMA planning estimates, not measured figures, and allow for the extra review AI-generated content needs.</p>
 			<p>A week of work is <?= HOURS_PER_WEEK ?> hours of development, which allows for the regular meetings and admin in a normal working week. The <?= WORKING_WEEKS_PER_YEAR ?> working weeks a year allow for holidays and leave. To show a backlog, compare the work hours with the time your team actually has free for development.</p>
 			<h2 id="types-heading">Content types</h2>
-			<p>What each content type covers, and what the AI assisted option means for it.</p>
+			<p>What each content type covers, what its development hours are based on, and what the AI assisted option means for it.</p>
 			<div class="types-wrap">
 				<table class="types-table">
 					<thead>
@@ -599,6 +608,7 @@ function legacy_rows(): array
 						<th scope="col">Content type</th>
 						<th scope="col">Duration in</th>
 						<th scope="col">What it covers</th>
+						<th scope="col">Based on</th>
 						<th scope="col">With AI assisted</th>
 						<th scope="col" class="num">AI saving</th>
 					</tr>
@@ -609,6 +619,7 @@ function legacy_rows(): array
 						<th scope="row" data-label="Content type"><?= h($item['label']) ?></th>
 						<td data-label="Duration in"><?= h(ucfirst(UNITS[$item['unit']]['plural'])) ?></td>
 						<td data-label="What it covers"><?= h($item['description']) ?></td>
+						<td data-label="Based on"><?= h($item['basis']) ?></td>
 						<td data-label="With AI assisted"><?= h($item['ai_note']) ?></td>
 						<td data-label="AI saving" class="num<?= $item['ai_saving'] === null ? ' na' : '' ?>"><?= $item['ai_saving'] === null ? 'Does not apply' : h((string)(int)round($item['ai_saving'] * 100)) . '%' ?></td>
 					</tr>
@@ -616,7 +627,14 @@ function legacy_rows(): array
 					</tbody>
 				</table>
 			</div>
-			<p>For background on development ratios, <a href="https://www.td.org/content/atd-blog/how-long-does-it-take-to-develop-training-new-question-new-answers">read the ATD article on how long training takes to develop</a>.</p>
+			<h2 id="sources-heading">Sources</h2>
+			<ul class="sources">
+				<li>Bryan Chapman, <a href="https://www.slideshare.net/slideshow/how-long-does-it-take-to-create-learning/5198860"><cite>How Long Does It Take to Create Learning?</cite></a>, Chapman Alliance, September 2010. A study of 249 organizations, counting time from everyone involved, including subject experts, media staff, and project managers. Used for instructor-led training, and as the upper reference for e-learning.</li>
+				<li>Steve Semler, <a href="https://www.learningsim.com/2024-cost-estimates-for-learning-design/"><cite>2024 Cost Estimates for Learning Design</cite></a>, LearningSim, February 2024. Used for instructor-led and virtual instructor-led training, and as a guide to the AI savings.</li>
+				<li><cite>CEdMA Business Metrics Survey</cite>, CEdMA Enterprise, November 2026. Results from CEdMA members. Used for instructor-led and virtual instructor-led training, and as the lower reference for e-learning.</li>
+				<li><a href="https://www.td.org/insights/dont-waste-your-money-when-developing-training-videos"><cite>Don't Waste Your Money When Developing Training Videos</cite></a>, ATD Blog, November 2015. Used for produced video.</li>
+				<li>Robyn A. Defelice, <a href="https://td.org/insights/how-long-does-it-take-to-develop-training-new-question-new-answers"><cite>How Long Does It Take to Develop Training? New Question, New Answers</cite></a>, ATD, January 2021. Background reading. It reports time to develop a typical unit of training rather than an hour, so it is not used for the figures.</li>
+			</ul>
 		</section>
 	</div>
 </main>
