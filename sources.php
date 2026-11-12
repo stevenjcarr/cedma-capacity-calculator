@@ -52,6 +52,7 @@ header('X-Content-Type-Options: nosniff');
 					</tbody>
 				</table>
 			</div>
+			<p>Most published figures for e-learning predate today's authoring tools, which have made building e-learning much quicker. The bulk of the time now goes on analysis and design rather than the build, which is why CEdMA's e-learning estimates sit below the older published figures. They are still at the low end of published research, so they are more likely to understate the work than overstate it.</p>
 
 			<h2 id="sources-heading">Sources</h2>
 			<ul class="sources">
@@ -59,7 +60,7 @@ header('X-Content-Type-Options: nosniff');
 				<li>Steve Semler, <a href="https://www.learningsim.com/2024-cost-estimates-for-learning-design/"><cite>2024 Cost Estimates for Learning Design</cite></a>, LearningSim, February 2024. Used for instructor-led and virtual instructor-led training, and as a guide to the AI savings.</li>
 				<li><cite>CEdMA Business Metrics Survey</cite>, CEdMA Enterprise, November 2026. Results from CEdMA members. Used for instructor-led and virtual instructor-led training, and as the lower reference for e-learning.</li>
 				<li><a href="https://www.td.org/insights/dont-waste-your-money-when-developing-training-videos"><cite>Don't Waste Your Money When Developing Training Videos</cite></a>, ATD Blog, November 2015. Used for produced video.</li>
-				<li>Robyn A. Defelice, <a href="https://td.org/insights/how-long-does-it-take-to-develop-training-new-question-new-answers"><cite>How Long Does It Take to Develop Training? New Question, New Answers</cite></a>, ATD, January 2021. Background reading. It reports time to develop a typical unit of training rather than an hour, so it is not used for the figures.</li>
+				<li>Robyn A. Defelice, <a href="https://td.org/insights/how-long-does-it-take-to-develop-training-new-question-new-answers"><cite>How Long Does It Take to Develop Training? New Question, New Answers</cite></a>, ATD, January 2021. A survey of 264 respondents, using 2020 data. It reports the hours to develop a typical unit of 17 to 26 minutes, not an hour. Converted to an hour, its figures are well above the calculator's, but the conversion is too uncertain to use them directly, so it is background reading.</li>
 			</ul>
 		</section>
 	</div>

@@ -48,6 +48,8 @@ The settings are at the top of `includes/calculator.php`:
   | Video, produced | 5 per minute | 10% | ATD Blog, November 2015 ("about four to five hours" per finished minute) |
   | Video, AI avatar | 3 per minute | Does not apply | CEdMA estimate. No independent published figures |
 
+  Most published e-learning figures predate today's authoring tools, which have made the build much quicker, so CEdMA's view is that analysis and design now take most of the time. That is why the e-learning estimates sit below the older published figures (Chapman Alliance 2010, and ATD 2021 converted from hours per unit), while staying at the low end of them. The sources page says so.
+
   The full source list is on the sources page (`sources.php`). The AI savings are CEdMA planning estimates; LearningSim 2024 (20 to 35% for e-learning, and design time "about the same" for instructor-led) was used as a guide.
 
   Each type's `ai_saving` is the reduction when an item is marked AI assisted. These are planning estimates that allow for the extra review AI-generated content needs. Set it to `null` for a type where the option does not apply, and the checkbox is turned off for that type. The `description` and `ai_note` text appear in the content types table at the bottom of the page.
