@@ -134,7 +134,7 @@ header('X-Content-Type-Options: nosniff');
 			<h2 id="method-heading">How the estimate works</h2>
 			<div class="method-grid">
 				<div class="method-text">
-					<p>The figures are a planning guide, not a quote. The development hours for each content type are for new content, and the level of effort scales them for updates.</p>
+					<p>The figures are a planning guide, not a quote. The development hours for each content type are for new content, and the level of effort scales them for updates. For the most reliable estimate, compare these figures with your own team's development times and adjust from there.</p>
 					<p>A week of work is <?= HOURS_PER_WEEK ?> hours of development, which allows for the regular meetings and admin in a normal working week. The <?= WORKING_WEEKS_PER_YEAR ?> working weeks a year allow for holidays and leave.</p>
 					<p>To show a backlog, compare the work hours with the time your team actually has free for development.</p>
 					<p>The AI savings are CEdMA planning estimates, not measured figures, and allow for the extra review AI-generated content needs. Where no reliable published figure exists for a content type, CEdMA has set an estimate. <a href="sources.php">See where the figures come from</a>.</p>
