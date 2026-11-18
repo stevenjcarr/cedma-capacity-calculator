@@ -32,6 +32,7 @@ function page_start(string $title, string $description): void
 <header class="site-header">
 	<div class="wrap">
 		<img src="<?= h(asset('cedma-full-rgb-dark.svg')) ?>" alt="CEdMA Enterprise" width="156" height="48">
+		<a class="main-site-link" href="/">Back to main site</a>
 	</div>
 </header>
 <?php
